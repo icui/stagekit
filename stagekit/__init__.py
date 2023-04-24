@@ -1,5 +1,4 @@
 from .root import root
-from .stage import stage
-from .context import ctx
+from .stage import stage, ctx
 
 __all__ = ['root', 'stage', 'ctx']

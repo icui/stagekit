@@ -6,13 +6,13 @@ from sys import stderr
 from .directory import Directory
 
 if TYPE_CHECKING:
-    from .stage import Stage
+    from .stage import Stage, Context
 
 
 root = Directory('.')
 
 
-async def main(stage: Stage):
+async def main(stage: Stage, ctx: Context):
     """Execute main stage.
 
     Args:
@@ -25,10 +25,18 @@ async def main(stage: Stage):
             stage = s
 
     try:
-        await stage.execute()
-    
-    except Exception:
+        output = await stage.execute()
+        if output is not None:
+            print(output)
+
+    except Exception as e:
         err = format_exc()
         print(err, file=stderr)
 
+        if ctx._current:
+            ctx._current.error = e
+
     root.dump(stage, 'stagekit.pickle')
+
+
+__all__ = ['root', 'main']

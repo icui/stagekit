@@ -5,7 +5,7 @@ from subprocess import check_call
 from glob import glob
 import pickle
 import toml
-from typing import Literal, List, Iterable, Any, cast
+from typing import Literal, List, Iterable, Any
 
 
 # supported types for directory.load() and directory.dump()
@@ -286,7 +286,7 @@ class Directory:
             Any: Content of the file.
         """
         if ext is None:
-            ext = cast(DumpType, src.split('.')[-1])
+            ext = src.split('.')[-1] # type: ignore
         
         if ext == 'pickle':
             with open(self.path(src), 'rb') as fb:
@@ -323,7 +323,7 @@ class Directory:
             self.mkdir(path.dirname(dst))
 
         if ext is None:
-            ext = cast(DumpType, dst.split('.')[-1])
+            ext = dst.split('.')[-1] # type: ignore
 
         if ext == 'pickle':
             with open(self.path(dst), 'wb') as fb:
@@ -344,3 +344,6 @@ class Directory:
         
         else:
             raise TypeError(f'unsupported file type {ext}')
+
+
+__all__ = ['Directory']
