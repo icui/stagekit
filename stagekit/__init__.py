@@ -1,4 +1,3 @@
-from .root import root
-from .stage import stage, ctx
+from .main import root, stage, ctx
 
 __all__ = ['root', 'stage', 'ctx']

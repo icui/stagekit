@@ -344,6 +344,3 @@ class Directory:
         
         else:
             raise TypeError(f'unsupported file type {ext}')
-
-
-__all__ = ['Directory']
