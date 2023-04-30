@@ -1,12 +1,16 @@
-from typing import Any
-
 from .stage import Stage
 
 
 class Context:
     """Getter of stage data and keyword arguments that also inherits from parent stages."""
-    def __getattr__(self, key: str):
-        current = Stage.current
+    # stage currently being executed
+    _current: Stage | None = None
+
+    # root stage is being saved
+    _saving = False
+
+    def __getattr__(self, key):
+        current = self._current
 
         while current:
             if key in current.data:
@@ -22,9 +26,9 @@ class Context:
 
         return None
 
-    def __setattr__(self, key: str, val: Any):
-        if Stage.current:
-            Stage.current.data[key] = val
-
+    def __setattr__(self, key, val):
+        if key[0] == '_':
+            self.__dict__[key] = val
+        
         else:
-            Stage.data[key] = val
+            (self._current or Stage).data[key] = val

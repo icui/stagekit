@@ -262,7 +262,7 @@ class Directory:
         """
         check_call(cmd, cwd=self.cwd, shell=True)
     
-    async def call_async(self, cmd: str):
+    async def async_call(self, cmd: str):
         """Call a shell command asynchronously.
 
         Args:

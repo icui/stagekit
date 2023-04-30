@@ -1,2 +1,0 @@
-def mpiexec(func):
-    pass

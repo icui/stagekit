@@ -3,7 +3,8 @@ from typing import Any, List, Mapping, Iterable, Callable, Tuple, TYPE_CHECKING
 import asyncio
 
 if TYPE_CHECKING:
-    from .main import StageFunc
+    from .wrapper import StageFunc
+    from .context import Context
 
 # typing for Stage configuration
 # [0]: wrapped function
@@ -14,11 +15,8 @@ StageConfig = Tuple['StageFunc', Iterable[Any], Mapping[str, Any]]
 
 class Stage:
     """Wrapper of a function to save execution progress."""
-    # (static property) stage currently being executed
-    current: Stage | None = None
-
     # (both static and non-static property) data defined by stage function accessed through ctx
-    # use static property Stage.data as top level of inheritance
+    # use static property Stage.data as root of inheritance
     data: dict = {}
 
     # stage function and arguments
@@ -51,11 +49,11 @@ class Stage:
         self.scheduled = []
         self.data = {}
 
-    async def execute(self):
+    async def execute(self, ctx: Context):
         """Execute main function."""
         # change context to self
-        self.parent = Stage.current
-        Stage.current = self
+        self.parent = ctx._current
+        ctx._current = self
 
         # initialize state
         self.step = 0
@@ -70,11 +68,11 @@ class Stage:
         self.done = True
 
         # restore context to parent stage
-        Stage.current = self.parent
+        ctx._current = self.parent
 
         return result
 
-    async def progress(self, config: StageConfig):
+    async def progress(self, config: StageConfig, ctx: Context):
         """Compare and execute a child step.
 
         Args:
@@ -86,7 +84,7 @@ class Stage:
 
             if stage.config == config:
                 if not stage.done:
-                    await stage.execute()
+                    await stage.execute(ctx)
 
                 self.step += 1
                 return stage.result
@@ -94,7 +92,7 @@ class Stage:
         self.history = self.history[:self.step]
         stage = Stage(config)
         self.history.append(stage)
-        await stage.execute()
+        await stage.execute(ctx)
         self.step += 1
 
         return stage.result

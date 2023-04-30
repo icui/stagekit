@@ -1,69 +1,53 @@
+from __future__ import annotations
 from traceback import format_exc
 from sys import stderr
-from typing import ParamSpec, Awaitable, Callable, Any
-from importlib import import_module
 import asyncio
 
 from .directory import Directory
+from .stage import Stage
 from .context import Context
-from .stage import Stage, StageConfig
+from .execute import STAGE_IN_SUBPROCESS
 
 root = Directory('.')
 ctx = Context()
 
 
-class StageFunc:
-    """Custom serializer for function decorated by @stage to avoid pickle error."""
-    # function decorated by @stage
-    func: Callable
+async def save_current():
+    """Save current state to stagekit.pickle one second later."""
+    if not ctx._saving and ctx._current:
+        stage = ctx._current
 
-    def __init__(self, func: Callable):
-        self.func = func
-    
-    def __call__(self, *args, **kwargs):
-        config = (self, args, kwargs)
+        while stage.parent:
+            stage = stage.parent
 
-        # if root stage exists, run as a child of current stage
-        # otherwise run as root stage
-        if Stage.current is None:
-            asyncio.run(main(config))
+        ctx._saving = True
+        await asyncio.sleep(1)
+        await save(stage)
+
+
+async def save(stage: Stage):
+    """Save a state to stagekit.pickle instantly."""
+    if not STAGE_IN_SUBPROCESS:
+        root.dump(stage, '_stagekit.pickle')
+        await asyncio.sleep(1)
+
+        try:
+            s = root.load('_stagekit.pickle')
+            assert s.config == stage.config
+
+        except:
+            pass
 
         else:
-            return Stage.current.progress(config)
-    
-    def __getstate__(self):
-        return {'m': self.func.__module__, 'n': self.func.__name__}
-
-    def __setstate__(self, state: dict):
-        self.func = getattr(import_module(state['m']), state['n']).func
-    
-    def __eq__(self, func):
-        if isinstance(func, StageFunc):
-            return self.__getstate__() == func.__getstate__()
-
-        return False
+            root.mv('_stagekit.pickle', 'stagekit.pickle')
 
 
-# type of the decorated function's arguments
-P = ParamSpec('P')
-
-def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]:
-    """Function wrapper that creates a stage to execute the function.
-
-    Args:
-        func (Callable): Function to create stage from.
-    """
-    return StageFunc(func) #type: ignore
-
-
-async def main(config: StageConfig):
+async def main(stage: Stage):
     """Execute main stage.
 
     Args:
         stage (Stage): Main stage.
     """
-    stage = Stage(config)
-
     if root.has('stagekit.pickle'):
         # restore from saved state
         s = root.load('stagekit.pickle')
@@ -71,7 +55,7 @@ async def main(config: StageConfig):
             stage = s
 
     try:
-        output = await stage.execute()
+        output = await stage.execute(ctx)
         if output is not None:
             print(output)
 
@@ -79,7 +63,7 @@ async def main(config: StageConfig):
         err = format_exc()
         print(err, file=stderr)
 
-        if Stage.current:
-            Stage.error = e
+        if ctx._current:
+            ctx._current.error = e
 
-    root.dump(stage, 'stagekit.pickle')
+    await save(stage)
