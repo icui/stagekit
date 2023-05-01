@@ -3,12 +3,11 @@ from traceback import format_exc
 from sys import stderr
 import asyncio
 
-from .directory import Directory
 from .stage import Stage
 from .context import Context
 from .execute import STAGE_IN_SUBPROCESS
 
-root = Directory('.')
+root = Context()
 ctx = Context()
 
 

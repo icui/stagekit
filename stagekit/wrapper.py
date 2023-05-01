@@ -15,7 +15,7 @@ class StageFunc:
         self.func = func
     
     def __call__(self, *args, **kwargs):
-        config = (self, args, kwargs)
+        config = (self, args, kwargs, ctx._chdir)
 
         # if root stage exists, run as a child of current stage
         # otherwise run as root stage

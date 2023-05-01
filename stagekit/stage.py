@@ -10,7 +10,8 @@ if TYPE_CHECKING:
 # [0]: wrapped function
 # [1]: arguments passed to self.func
 # [2]: keyword argumentd passed to self.func
-StageConfig = Tuple['StageFunc', Iterable[Any], Mapping[str, Any]]
+# [3]: working directory relative to parent stage
+StageConfig = Tuple['StageFunc', Iterable[Any], Mapping[str, Any], str | None]
 
 
 class Stage:
@@ -54,6 +55,7 @@ class Stage:
         # change context to self
         self.parent = ctx._current
         ctx._current = self
+        ctx.goto()
 
         # initialize state
         self.step = 0
@@ -69,6 +71,7 @@ class Stage:
 
         # restore context to parent stage
         ctx._current = self.parent
+        ctx.goto()
 
         return result
 
