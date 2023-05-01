@@ -50,7 +50,7 @@ class Stage:
         self.scheduled = []
         self.data = {}
 
-    async def execute(self, ctx: Context):
+    async def execute(self, ctx: Context, checkpoint: Callable):
         """Execute main function."""
         # change context to self
         self.parent = ctx._current
@@ -65,17 +65,18 @@ class Stage:
         result = self.config[0].func(*self.config[1], **self.config[2])
         if asyncio.iscoroutine(result):
             result = await result
-        
+
         self.result = result
         self.done = True
 
         # restore context to parent stage
         ctx._current = self.parent
         ctx.goto()
+        asyncio.create_task(checkpoint())
 
         return result
 
-    async def progress(self, config: StageConfig, ctx: Context):
+    async def progress(self, config: StageConfig, ctx: Context, checkpoint: Callable):
         """Compare and execute a child step.
 
         Args:
@@ -87,7 +88,7 @@ class Stage:
 
             if stage.config == config:
                 if not stage.done:
-                    await stage.execute(ctx)
+                    await stage.execute(ctx, checkpoint)
 
                 self.step += 1
                 return stage.result
@@ -95,7 +96,7 @@ class Stage:
         self.history = self.history[:self.step]
         stage = Stage(config)
         self.history.append(stage)
-        await stage.execute(ctx)
+        await stage.execute(ctx, checkpoint)
         self.step += 1
 
         return stage.result

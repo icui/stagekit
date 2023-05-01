@@ -3,7 +3,7 @@ from importlib import import_module
 import asyncio
 
 from .stage import Stage
-from .main import main, ctx
+from .main import main, ctx, checkpoint
 
 
 class StageFunc:
@@ -23,7 +23,7 @@ class StageFunc:
             asyncio.run(main(Stage(config)))
 
         else:
-            return ctx._current.progress(config, ctx)
+            return ctx._current.progress(config, ctx, checkpoint)
 
     def __getstate__(self):
         return {'m': self.func.__module__, 'n': self.func.__name__}

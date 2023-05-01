@@ -11,7 +11,7 @@ root = Context()
 ctx = Context()
 
 
-async def save_current():
+async def checkpoint():
     """Save current state to stagekit.pickle one second later."""
     if not ctx._saving and ctx._current:
         stage = ctx._current
@@ -54,7 +54,7 @@ async def main(stage: Stage):
             stage = s
 
     try:
-        output = await stage.execute(ctx)
+        output = await stage.execute(ctx, checkpoint)
         if output is not None:
             print(output)
 
