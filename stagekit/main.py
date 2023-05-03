@@ -7,12 +7,15 @@ from .stage import Stage
 from .context import Context
 from .execute import STAGE_IN_SUBPROCESS
 
+# context of root directory as directory utility
 root = Context()
+
+# context used by stages
 ctx = Context()
 
 
 async def checkpoint():
-    """Save current state to stagekit.pickle one second later."""
+    """Save root stage to stagekit.pickle one second later."""
     if not ctx._saving and ctx._current:
         stage = ctx._current
 
@@ -21,16 +24,19 @@ async def checkpoint():
 
         ctx._saving = True
         await asyncio.sleep(1)
-        await save(stage)
+
+        if ctx._saving:
+            await save(stage)
 
 
 async def save(stage: Stage):
-    """Save a state to stagekit.pickle instantly."""
+    """Save a stage to stagekit.pickle."""
     if not STAGE_IN_SUBPROCESS:
         root.dump(stage, '_stagekit.pickle')
         await asyncio.sleep(1)
 
         try:
+            # verify saved state
             s = root.load('_stagekit.pickle')
             assert s.config == stage.config
 
@@ -39,6 +45,8 @@ async def save(stage: Stage):
 
         else:
             root.mv('_stagekit.pickle', 'stagekit.pickle')
+
+        ctx._saving = False
 
 
 async def main(stage: Stage):
@@ -54,6 +62,7 @@ async def main(stage: Stage):
             stage = s
 
     try:
+        # execute root stage
         output = await stage.execute(ctx, checkpoint)
         if output is not None:
             print(output)

@@ -11,7 +11,7 @@ from .stage import Stage
 
 
 class Context:
-    """Getter of stage data and keyword arguments that also inherits from parent stages."""
+    """Getter of stage keyword arguments that also inherits from parent stages."""
     # stage currently being executed
     _current: Stage | None = None
 
