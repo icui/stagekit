@@ -3,6 +3,7 @@ from importlib import import_module
 import asyncio
 
 from .stage import Stage
+from .context import current_stage
 from .main import main, ctx, checkpoint
 
 
@@ -15,22 +16,26 @@ class StageFunc:
         self.func = func
     
     def __call__(self, *args, **kwargs):
-        config = (self, args, kwargs, ctx._chdir)
+        current = current_stage()
+        stage = Stage(self, args, kwargs, ctx._chdir)
+        stage.parent = current
 
         # if root stage exists, run as a child of current stage
         # otherwise run as root stage
-        if ctx._current is None:
-            asyncio.run(main(Stage(config)))
+        if current is None:
+            asyncio.run(main(stage))
 
         else:
-            return ctx._current.progress(config, ctx, checkpoint)
+            task = asyncio.create_task(current.progress(stage, ctx, checkpoint))
+            task._sk_stage = stage # type: ignore
+            return task
 
     def __getstate__(self):
         return {'m': self.func.__module__, 'n': self.func.__name__}
 
     def __setstate__(self, state: dict):
         self.func = getattr(import_module(state['m']), state['n']).func
-    
+
     def __eq__(self, func):
         if isinstance(func, StageFunc):
             return self.__getstate__() == func.__getstate__()

@@ -4,7 +4,7 @@ from sys import stderr
 import asyncio
 
 from .stage import Stage
-from .context import Context
+from .context import Context, current_stage
 from .execute import STAGE_IN_SUBPROCESS
 
 # context of root directory as directory utility
@@ -16,13 +16,15 @@ ctx = Context()
 
 async def checkpoint():
     """Save root stage to stagekit.pickle one second later."""
-    if not ctx._saving and ctx._current:
-        stage = ctx._current
+    if ctx._saving:
+        return
+
+    if stage := current_stage():
+        ctx._saving = True
 
         while stage.parent:
             stage = stage.parent
 
-        ctx._saving = True
         await asyncio.sleep(1)
 
         if ctx._saving:
@@ -38,7 +40,7 @@ async def save(stage: Stage):
         try:
             # verify saved state
             s = root.load('_stagekit.pickle')
-            assert s.config == stage.config
+            assert s == stage
 
         except:
             pass
@@ -49,29 +51,46 @@ async def save(stage: Stage):
         ctx._saving = False
 
 
+def _create_task(self, coro):
+    """Add a custom property to asyncio.Task to store the stage a task is created from."""
+    task = asyncio.Task(coro, loop=self)
+    try:
+        task._sk_stage = asyncio.current_task()._sk_stage # type: ignore
+    except:
+        task._sk_stage = None # type: ignore
+    return task
+
+
 async def main(stage: Stage):
     """Execute main stage.
 
     Args:
         stage (Stage): Main stage.
     """
+    loop = asyncio.get_running_loop()
+    loop.set_task_factory(_create_task)
+
     if root.has('stagekit.pickle'):
         # restore from saved state
         s = root.load('stagekit.pickle')
-        if s.config == stage.config:
+        if s == stage:
             stage = s
 
     try:
         # execute root stage
+        task = asyncio.current_task()
+        task._sk_stage = stage # type: ignore
+
         output = await stage.execute(ctx, checkpoint)
         if output is not None:
             print(output)
 
     except Exception as e:
         err = format_exc()
+        current = current_stage()
         print(err, file=stderr)
 
-        if ctx._current:
-            ctx._current.error = e
+        if current:
+            current.error = e
 
     await save(stage)

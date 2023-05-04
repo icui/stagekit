@@ -6,15 +6,22 @@ from glob import glob
 import pickle
 import toml
 from typing import List, Iterable, Any
+import asyncio
 
 from .stage import Stage
 
 
+def current_stage() -> Stage | None:
+    """Get current running stage."""
+    try:
+        return asyncio.current_task()._sk_stage # type: ignore
+
+    except:
+        return None
+
+
 class Context:
     """Getter of stage keyword arguments that also inherits from parent stages."""
-    # stage currently being executed
-    _current: Stage | None = None
-
     # root stage is being saved
     _saving = False
 
@@ -25,21 +32,21 @@ class Context:
     _cwd: str = '.'
 
     def __getitem__(self, key):
-        current = self._current
+        current = current_stage()
 
         while current:
             if key in current.data:
                 return current.data[key]
 
-            if key in current.config[2]:
-                return current.config[2][key]
+            if key in current.kwargs:
+                return current.kwargs[key]
 
             current = current.parent
 
         return Stage.data.get(key)
 
     def __setitem__(self, key, val):
-        (self._current or Stage).data[key] = val
+        (current_stage() or Stage).data[key] = val
 
     @property
     def cwd(self):
@@ -59,11 +66,11 @@ class Context:
         if self._chdir is not None:
             paths.append(self._chdir)
 
-        current = self._current
+        current = current_stage()
 
         while current:
-            if current.config[3] is not None:
-                paths.append(current.config[3])
+            if current.cwd is not None:
+                paths.append(current.cwd)
             
             current = current.parent
         

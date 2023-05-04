@@ -6,31 +6,32 @@ if TYPE_CHECKING:
     from .wrapper import StageFunc
     from .context import Context
 
-# typing for Stage configuration
-# [0]: wrapped function
-# [1]: arguments passed to self.func
-# [2]: keyword argumentd passed to self.func
-# [3]: working directory relative to parent stage
-StageConfig = Tuple['StageFunc', Iterable[Any], Mapping[str, Any], str | None]
-
 
 class Stage:
-    """Wrapper of a function to save execution progress."""
+    """Wrapper of a function to save execution progress.
+        Note: Stage is intended to be a purely internal class,
+        do not create a stage directly with Stage(), use decorator @stage instead."""
     # (both static and non-static property) data defined by stage function accessed through ctx
     # use static property Stage.data as root of inheritance
     data: dict = {}
 
-    # stage function and arguments
-    config: StageConfig
+    # stage function
+    func: StageFunc
+
+    # arguments of self.func
+    args: Iterable[Any]
+
+    # keyword arguments of self.func
+    kwargs: Mapping[str, Any]
+
+    # working directory relative to parent stage
+    cwd: str | None
 
     # index of current child stage
     step: int = 0
 
     # executed child stages
     history: List[Stage]
-
-    # MPI or subprocess function calls awaiting execution after stage function finishes
-    scheduled: List[Callable]
 
     # parent stage
     parent: Stage | None = None
@@ -44,57 +45,70 @@ class Stage:
     # error occured during execution
     error: Exception | None = None
 
-    def __init__(self, config: StageConfig):
-        self.config = config
+    def __init__(self, func: StageFunc, args: Iterable[Any], kwargs: Mapping[str, Any], cwd: str | None):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.cwd = cwd
+
         self.history = []
         self.scheduled = []
         self.data = {}
+    
+    def __eq__(self, stage: Stage | None):
+        if stage:
+            return self.func == stage.func and \
+                self.args == stage.args and \
+                self.kwargs == stage.kwargs and \
+                self.cwd == stage.cwd
+
+        return False
 
     async def execute(self, ctx: Context, checkpoint: Callable):
         """Execute main function."""
-        # change context to self
-        self.parent = ctx._current
-        ctx._current = self
-        ctx.goto()
-
         # initialize state
         self.step = 0
         self.done = False
-        self.scheduled.clear()
+        ctx.goto()
 
-        result = self.config[0].func(*self.config[1], **self.config[2])
+        result = self.func.func(*self.args, **self.kwargs)
         if asyncio.iscoroutine(result):
             result = await result
 
         self.result = result
         self.done = True
-
-        # restore context to parent stage
-        ctx._current = self.parent
         ctx.goto()
+
+        # save execution state
         asyncio.create_task(checkpoint())
 
         return result
 
-    async def progress(self, config: StageConfig, ctx: Context, checkpoint: Callable):
+    async def progress(self, stage: Stage, ctx: Context, checkpoint: Callable):
         """Compare and execute a child step.
 
         Args:
-            args (StageConfig): Arguments of the child step.
+            stage (Stage): Child stage to be executed.
+            ctx (Context): Context of current stage.
+            checkpoint (Callable): function to save stage state.
+
+        Returns:
+            Any: Return value of stage function.
         """
         if self.step < len(self.history):
             # skip if stage is already created or executed
-            stage = self.history[self.step]
+            s = self.history[self.step]
 
-            if stage.config == config:
-                if not stage.done:
-                    await stage.execute(ctx, checkpoint)
+            if s == stage:
+                if not s.done:
+                    # FIXME: use asyncio.current_task() to determine context
+                    # await -> asyncio.create_task()
+                    await s.execute(ctx, checkpoint)
 
                 self.step += 1
-                return stage.result
+                return s.result
 
         self.history = self.history[:self.step]
-        stage = Stage(config)
         self.history.append(stage)
         await stage.execute(ctx, checkpoint)
         self.step += 1
