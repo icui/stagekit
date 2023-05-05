@@ -2,7 +2,7 @@ from typing import ParamSpec, Awaitable, Callable, Any
 from importlib import import_module
 import asyncio
 
-from .stage import Stage
+from .stage import Stage, create_task
 from .context import current_stage
 from .main import main, ctx, checkpoint
 
@@ -20,14 +20,16 @@ class StageFunc:
         stage = Stage(self, args, kwargs, ctx._chdir)
         stage.parent = current
 
-        # if root stage exists, run as a child of current stage
-        # otherwise run as root stage
         if current is None:
+            # if root stage is None, run as root stage
             asyncio.run(main(stage))
 
         else:
-            task = asyncio.create_task(current.progress(stage, ctx, checkpoint))
-            task._sk_stage = stage # type: ignore
+            # if root stage exists, run as a child of current stage
+            stage.index = current.step + len(current.pending)
+            task = create_task(current.progress(stage, ctx, checkpoint))
+            task._sk_stage = stage
+            current.pending.append(stage)
             return task
 
     def __getstate__(self):
@@ -53,3 +55,14 @@ def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]:
         func (Callable): Function to create stage from.
     """
     return StageFunc(func) #type: ignore
+
+
+def gather(*coros: Awaitable):
+    """Run multiple stages or tasks concurrently."""
+    current = current_stage()
+
+    if current is None:
+        raise RuntimeError('gather can only be run inside a stage')
+
+    if current.step < len(current.history):
+        s = current.history[current.step]

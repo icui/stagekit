@@ -1,11 +1,12 @@
 from __future__ import annotations
-from typing import Any, List, Mapping, Iterable, Callable, Tuple, TYPE_CHECKING
+from typing import Any, List, Mapping, Iterable, Callable, Set, TYPE_CHECKING
 import asyncio
+from .task import create_task
+
 
 if TYPE_CHECKING:
     from .wrapper import StageFunc
     from .context import Context
-
 
 class Stage:
     """Wrapper of a function to save execution progress.
@@ -30,8 +31,14 @@ class Stage:
     # index of current child stage
     step: int = 0
 
-    # executed child stages
-    history: List[Stage]
+    # index in the stage list of parent stage
+    index: int | None = None
+
+    # executed child stages (stage set means multiple stages executed concurrently)
+    history: List[Stage | List[Stage]]
+
+    # list of child stages waiting execution
+    pending: List[Stage]
 
     # parent stage
     parent: Stage | None = None
@@ -52,9 +59,9 @@ class Stage:
         self.cwd = cwd
 
         self.history = []
-        self.scheduled = []
+        self.pending = []
         self.data = {}
-    
+
     def __eq__(self, stage: Stage | None):
         if stage:
             return self.func == stage.func and \
@@ -69,6 +76,7 @@ class Stage:
         # initialize state
         self.step = 0
         self.done = False
+        self.pending.clear()
         ctx.goto()
 
         result = self.func.func(*self.args, **self.kwargs)
@@ -80,7 +88,7 @@ class Stage:
         ctx.goto()
 
         # save execution state
-        asyncio.create_task(checkpoint())
+        create_task(checkpoint())
 
         return result
 
@@ -95,22 +103,31 @@ class Stage:
         Returns:
             Any: Return value of stage function.
         """
+        if self.step != stage.index:
+            raise RuntimeError(f'unexpected task ({self.step} / {stage.index}) {stage.func.func}')
+
         if self.step < len(self.history):
             # skip if stage is already created or executed
             s = self.history[self.step]
 
-            if s == stage:
+            if isinstance(s, list):
+                pass
+
+            elif s == stage:
                 if not s.done:
-                    # FIXME: use asyncio.current_task() to determine context
-                    # await -> asyncio.create_task()
+                    # re-run old task
                     await s.execute(ctx, checkpoint)
 
+                self.pending.remove(stage)
                 self.step += 1
+
                 return s.result
 
         self.history = self.history[:self.step]
         self.history.append(stage)
         await stage.execute(ctx, checkpoint)
+
+        self.pending.remove(stage)
         self.step += 1
 
         return stage.result

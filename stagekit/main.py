@@ -4,6 +4,7 @@ from sys import stderr
 import asyncio
 
 from .stage import Stage
+from .task import setup_task
 from .context import Context, current_stage
 from .execute import STAGE_IN_SUBPROCESS
 
@@ -51,24 +52,13 @@ async def save(stage: Stage):
         ctx._saving = False
 
 
-def _create_task(self, coro):
-    """Add a custom property to asyncio.Task to store the stage a task is created from."""
-    task = asyncio.Task(coro, loop=self)
-    try:
-        task._sk_stage = asyncio.current_task()._sk_stage # type: ignore
-    except:
-        task._sk_stage = None # type: ignore
-    return task
-
-
 async def main(stage: Stage):
     """Execute main stage.
 
     Args:
         stage (Stage): Main stage.
     """
-    loop = asyncio.get_running_loop()
-    loop.set_task_factory(_create_task)
+    setup_task()
 
     if root.has('stagekit.pickle'):
         # restore from saved state
