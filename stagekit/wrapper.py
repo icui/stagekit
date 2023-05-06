@@ -1,4 +1,4 @@
-from typing import ParamSpec, Awaitable, Callable, Any
+from typing import ParamSpec, Awaitable, Callable, Any, Literal, overload
 from importlib import import_module
 import asyncio
 
@@ -12,8 +12,16 @@ class StageFunc:
     # function decorated by @stage
     func: Callable
 
-    def __init__(self, func: Callable):
+    # whether or not to re-run existing stage when called
+    # True: always re-run
+    # False: never re-run
+    # 'auto': re-run only if stage has at least one child stage (because by design,
+    #   stages with child stages should be cheap to run)
+    rerun: bool | Literal['auto']
+
+    def __init__(self, func: Callable, rerun: bool | Literal['auto']):
         self.func = func
+        self.rerun = rerun
     
     def __call__(self, *args, **kwargs):
         current = current_stage()
@@ -26,10 +34,9 @@ class StageFunc:
 
         else:
             # if root stage exists, run as a child of current stage
-            stage.index = current.step + len(current.pending)
             task = create_task(current.progress(stage, ctx, checkpoint))
             task._sk_stage = stage
-            current.pending.append(stage)
+            task._sk_is_stage = True
             return task
 
     def __getstate__(self):
@@ -47,22 +54,27 @@ class StageFunc:
 
 # type of the decorated function's arguments
 P = ParamSpec('P')
+Q = ParamSpec('Q')
 
-def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]:
+
+@overload
+def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
+
+@overload
+def stage(func: None, *, rerun: bool | Literal['auto']) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
+
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto') -> \
+    Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]] | Callable[P, Awaitable[Any]]:
     """Function wrapper that creates a stage to execute the function.
 
     Args:
         func (Callable): Function to create stage from.
+        rerun (bool | Literal['auto']): Whether or not to re-run existing stage function.
     """
-    return StageFunc(func) #type: ignore
+    if func is None:
+        def wrapper(f):
+            return StageFunc(f, rerun)
 
+        return wrapper # type: ignore
 
-def gather(*coros: Awaitable):
-    """Run multiple stages or tasks concurrently."""
-    current = current_stage()
-
-    if current is None:
-        raise RuntimeError('gather can only be run inside a stage')
-
-    if current.step < len(current.history):
-        s = current.history[current.step]
+    return StageFunc(func, 'auto') #type: ignore

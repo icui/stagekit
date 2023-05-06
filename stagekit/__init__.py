@@ -1,4 +1,4 @@
 from .main import root, ctx
-from .wrapper import stage, gather
+from .wrapper import stage
 
-__all__ = ['root', 'ctx', 'stage', 'gather']
+__all__ = ['root', 'ctx', 'stage']

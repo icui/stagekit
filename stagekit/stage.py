@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .wrapper import StageFunc
     from .context import Context
 
+
 class Stage:
     """Wrapper of a function to save execution progress.
         Note: Stage is intended to be a purely internal class,
@@ -28,17 +29,8 @@ class Stage:
     # working directory relative to parent stage
     cwd: str | None
 
-    # index of current child stage
-    step: int = 0
-
-    # index in the stage list of parent stage
-    index: int | None = None
-
-    # executed child stages (stage set means multiple stages executed concurrently)
-    history: List[Stage | List[Stage]]
-
-    # list of child stages waiting execution
-    pending: List[Stage]
+    # executed child stages
+    history: List[Stage]
 
     # parent stage
     parent: Stage | None = None
@@ -59,7 +51,6 @@ class Stage:
         self.cwd = cwd
 
         self.history = []
-        self.pending = []
         self.data = {}
 
     def __eq__(self, stage: Stage | None):
@@ -74,9 +65,7 @@ class Stage:
     async def execute(self, ctx: Context, checkpoint: Callable):
         """Execute main function."""
         # initialize state
-        self.step = 0
         self.done = False
-        self.pending.clear()
         ctx.goto()
 
         result = self.func.func(*self.args, **self.kwargs)
@@ -103,31 +92,20 @@ class Stage:
         Returns:
             Any: Return value of stage function.
         """
-        if self.step != stage.index:
-            raise RuntimeError(f'unexpected task ({self.step} / {stage.index}) {stage.func.func}')
-
-        if self.step < len(self.history):
-            # skip if stage is already created or executed
-            s = self.history[self.step]
-
-            if isinstance(s, list):
-                pass
-
-            elif s == stage:
-                if not s.done:
-                    # re-run old task
+        for s in self.history:
+            if s == stage:
+                if not s.done or stage.func.rerun == True or (stage.func.rerun == 'auto' and len(s.history) > 0):
+                    # re-run existing stage if:
+                    # (1) stage not completed
+                    # (2) stage is set to alwarys re-run
+                    # (3) stage is set to auto re-run and stage has child stage
+                    task = asyncio.current_task()
+                    task._sk_stage = s # type: ignore
                     await s.execute(ctx, checkpoint)
-
-                self.pending.remove(stage)
-                self.step += 1
-
+                
                 return s.result
 
-        self.history = self.history[:self.step]
         self.history.append(stage)
         await stage.execute(ctx, checkpoint)
-
-        self.pending.remove(stage)
-        self.step += 1
 
         return stage.result

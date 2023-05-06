@@ -11,6 +11,9 @@ class Task(asyncio.Task):
     # the stage that created the task
     _sk_stage: Stage | None = None
 
+    # task is created by decorator @stage
+    _sk_is_stage = False
+
 
 def create_task(coro: Coroutine) -> Task:
     """Just asyncio.create_task with typing for custom Task properties."""

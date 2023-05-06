@@ -77,10 +77,9 @@ async def main(stage: Stage):
 
     except Exception as e:
         err = format_exc()
-        current = current_stage()
         print(err, file=stderr)
 
-        if current:
+        if current := current_stage():
             current.error = e
 
     await save(stage)
