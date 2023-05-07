@@ -2,7 +2,7 @@ from typing import ParamSpec, Awaitable, Callable, Any, Literal, overload
 from importlib import import_module
 import asyncio
 
-from .stage import Stage, create_task
+from .stage import Stage
 from .context import current_stage
 from .main import main, ctx, checkpoint
 
@@ -34,10 +34,7 @@ class StageFunc:
 
         else:
             # if root stage exists, run as a child of current stage
-            task = create_task(current.progress(stage, ctx, checkpoint))
-            task._sk_stage = stage
-            task._sk_is_stage = True
-            return task
+            return current.progress(stage, ctx, checkpoint)
 
     def __getstate__(self):
         return {'m': self.func.__module__, 'n': self.func.__name__}

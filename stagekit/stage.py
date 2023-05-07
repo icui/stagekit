@@ -77,7 +77,7 @@ class Stage:
         ctx.goto()
 
         # save execution state
-        create_task(checkpoint())
+        asyncio.create_task(checkpoint())
 
         return result
 
@@ -99,13 +99,11 @@ class Stage:
                     # (1) stage not completed
                     # (2) stage is set to alwarys re-run
                     # (3) stage is set to auto re-run and stage has child stage
-                    task = asyncio.current_task()
-                    task._sk_stage = s # type: ignore
-                    await s.execute(ctx, checkpoint)
+                    await create_task(s.execute(ctx, checkpoint), s)
                 
                 return s.result
 
         self.history.append(stage)
-        await stage.execute(ctx, checkpoint)
+        await create_task(stage.execute(ctx, checkpoint), stage)
 
         return stage.result
