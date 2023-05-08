@@ -8,6 +8,8 @@ import toml
 from asyncio import sleep
 from typing import List, Iterable, Any
 
+from .wrapper import stage
+
 
 class Directory:
     """Utility for directory operation."""
@@ -69,6 +71,7 @@ class Directory:
         """
         return path.exists(self.path(src))
 
+    @stage
     async def call(self, cmd: str, cwd: str | None = None):
         """Call a shell command asynchronously.
 

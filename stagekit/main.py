@@ -36,8 +36,7 @@ async def main(stage: Stage):
             print(output)
 
     except Exception as e:
-        err = format_exc()
-        print(err, file=stderr)
+        print(format_exc(), file=stderr)
 
         if current := current_stage():
             current.error = e

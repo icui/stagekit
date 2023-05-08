@@ -68,7 +68,12 @@ class Stage:
         self.done = False
         ctx.goto()
 
-        result = self.func.func(*self.args, **self.kwargs)
+        if self.func.obj:
+            result = self.func.func(self.func.obj, *self.args, **self.kwargs)
+        
+        else:
+            result = self.func.func(*self.args, **self.kwargs)
+
         if asyncio.iscoroutine(result):
             result = await result
 
@@ -99,6 +104,7 @@ class Stage:
                     # (1) stage not completed
                     # (2) stage is set to alwarys re-run
                     # (3) stage is set to auto re-run and stage has child stage
+                    s.func = stage.func
                     await create_task(s.execute(ctx), s)
                 
                 return s.result

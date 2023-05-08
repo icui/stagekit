@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from os import path
 from asyncio import sleep
+from traceback import format_exc
+from sys import stderr
 
 from .stage import Stage, current_stage
 from .directory import Directory
@@ -38,6 +40,9 @@ class Context(Directory):
 
     def __setitem__(self, key, val):
         (current_stage() or Stage).data[key] = val
+
+    def __eq__(self, ctx):
+        return self._chdir == ctx._chdir
 
     def goto(self, cwd: str | None = None):
         """Change working directory.
@@ -95,8 +100,8 @@ class Context(Directory):
                 s = self.root.load('_stagekit.pickle')
                 assert s == stage
 
-            except:
-                pass
+            except Exception:
+                print(format_exc(), file=stderr)
 
             else:
                 self.root.mv('_stagekit.pickle', 'stagekit.pickle')
