@@ -62,7 +62,7 @@ class Stage:
 
         return False
 
-    async def execute(self, ctx: Context, checkpoint: Callable):
+    async def execute(self, ctx: Context):
         """Execute main function."""
         # initialize state
         self.done = False
@@ -77,11 +77,11 @@ class Stage:
         ctx.goto()
 
         # save execution state
-        asyncio.create_task(checkpoint())
+        asyncio.create_task(ctx.checkpoint())
 
         return result
 
-    async def progress(self, stage: Stage, ctx: Context, checkpoint: Callable):
+    async def progress(self, stage: Stage, ctx: Context):
         """Compare and execute a child step.
 
         Args:
@@ -99,11 +99,20 @@ class Stage:
                     # (1) stage not completed
                     # (2) stage is set to alwarys re-run
                     # (3) stage is set to auto re-run and stage has child stage
-                    await create_task(s.execute(ctx, checkpoint), s)
+                    await create_task(s.execute(ctx), s)
                 
                 return s.result
 
         self.history.append(stage)
-        await create_task(stage.execute(ctx, checkpoint), stage)
+        await create_task(stage.execute(ctx), stage)
 
         return stage.result
+
+
+def current_stage() -> Stage | None:
+    """Get current running stage."""
+    try:
+        return asyncio.current_task()._sk_stage # type: ignore
+
+    except:
+        return None

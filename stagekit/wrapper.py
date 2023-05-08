@@ -1,10 +1,16 @@
-from typing import ParamSpec, Awaitable, Callable, Any, Literal, overload
+from __future__ import annotations
+from typing import ParamSpec, Awaitable, Callable, Any, Literal, TYPE_CHECKING, overload
 from importlib import import_module
 import asyncio
 
-from .stage import Stage
-from .context import current_stage
-from .main import main, ctx, checkpoint
+from .stage import Stage, current_stage
+
+if TYPE_CHECKING:
+    from .context import Context
+
+
+# current running context
+_ctx: Context
 
 
 class StageFunc:
@@ -25,16 +31,22 @@ class StageFunc:
     
     def __call__(self, *args, **kwargs):
         current = current_stage()
-        stage = Stage(self, args, kwargs, ctx._chdir)
-        stage.parent = current
 
         if current is None:
             # if root stage is None, run as root stage
+            from .main import main, ctx
+
+            global _ctx
+            _ctx = ctx
+
+            stage = Stage(self, args, kwargs, None)
             asyncio.run(main(stage))
 
         else:
             # if root stage exists, run as a child of current stage
-            return current.progress(stage, ctx, checkpoint)
+            stage = Stage(self, args, kwargs, _ctx._chdir)
+            stage.parent = current
+            return current.progress(stage, _ctx)
 
     def __getstate__(self):
         return {'m': self.func.__module__, 'n': self.func.__name__}
@@ -75,3 +87,7 @@ def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto']
         return wrapper # type: ignore
 
     return StageFunc(func, 'auto') #type: ignore
+
+
+def setup_wrapper(ctx: Context, checkpoint: Callable):
+    """Set global """
