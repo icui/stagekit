@@ -4,6 +4,7 @@ from os import path
 from asyncio import sleep
 from traceback import format_exc
 from sys import stderr
+from typing import Literal
 
 from .stage import Stage, current_stage
 from .directory import Directory
@@ -16,6 +17,9 @@ class Context(Directory):
     root: Directory
 
     # root stage is being saved
+    # 0: not being saved
+    # 1: preparing to save
+    # 2: being saved
     _saving = False
 
     # working directory relative to current stage directory
@@ -87,13 +91,12 @@ class Context(Directory):
             await sleep(1)
 
             if self._saving:
-                await self._save(stage)
+                self._save(stage)
 
-    async def _save(self, stage: Stage):
+    def _save(self, stage: Stage):
         """Save a stage to stagekit.pickle."""
         if not STAGE_IN_SUBPROCESS:
             self.root.dump(stage, '_stagekit.pickle')
-            await sleep(1)
 
             try:
                 # verify saved state

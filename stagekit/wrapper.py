@@ -43,12 +43,12 @@ class StageFunc:
             global _ctx
             _ctx = ctx
 
-            stage = Stage(self, args, kwargs, None)
+            stage = Stage(self, args, kwargs, None, 0)
             asyncio.run(main(stage))
 
         else:
             # if root stage exists, run as a child of current stage
-            stage = Stage(self, args, kwargs, _ctx._chdir)
+            stage = Stage(self, args, kwargs, _ctx._chdir, current.version)
             stage.parent = current
             return current.progress(stage, _ctx)
 

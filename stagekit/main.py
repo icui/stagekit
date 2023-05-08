@@ -41,4 +41,4 @@ async def main(stage: Stage):
         if current := current_stage():
             current.error = e
 
-    await ctx._save(stage)
+    ctx._save(stage)

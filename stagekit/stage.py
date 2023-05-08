@@ -44,11 +44,18 @@ class Stage:
     # error occured during execution
     error: Exception | None = None
 
-    def __init__(self, func: StageFunc, args: Iterable[Any], kwargs: Mapping[str, Any], cwd: str | None):
+    # number of times executed
+    version: int = 0
+
+    # number of times parent stage is executed
+    parent_version: int
+
+    def __init__(self, func: StageFunc, args: Iterable[Any], kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
         self.func = func
         self.args = args
         self.kwargs = kwargs
         self.cwd = cwd
+        self.parent_version = parent_version
 
         self.history = []
         self.data = {}
@@ -66,6 +73,7 @@ class Stage:
         """Execute main function."""
         # initialize state
         self.done = False
+        self.version += 1
         ctx.goto()
 
         if self.func.obj:
