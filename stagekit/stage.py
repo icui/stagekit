@@ -86,10 +86,13 @@ class Stage:
             result = await result
 
         self.result = result
-        self.done = True
-        ctx.goto()
+        
+        # remove outdated child stages
+        self.history = list(filter(lambda s: s.parent_version == self.version, self.history))
 
         # save execution state
+        ctx.goto()
+        self.done = True
         asyncio.create_task(ctx.checkpoint())
 
         return result
@@ -115,6 +118,7 @@ class Stage:
                     s.func = stage.func
                     await create_task(s.execute(ctx), s)
                 
+                s.parent_version = stage.parent_version
                 return s.result
 
         self.history.append(stage)
