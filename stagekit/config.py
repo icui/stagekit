@@ -2,10 +2,10 @@ import json
 from os import environ
 from typing import Tuple, Dict, List, TypedDict
 
-from .lib.config import config_default
+from .lib.config import default_config
 
 
-class JobDict(TypedDict, total=False):
+class ConfigDictMPI(TypedDict, total=False):
     """Job configuration."""
     # inherit from and existing configuration
     inherit: str
@@ -29,7 +29,7 @@ class JobDict(TypedDict, total=False):
     submit: str
 
 
-class FormatDict(TypedDict):
+class ConfigDictIO(TypedDict):
     """Custom format for ctx.load() and ctx.dump()."""
     # extension name
     ext: str | List[str]
@@ -43,11 +43,11 @@ class FormatDict(TypedDict):
 
 class ConfigDict(TypedDict):
     """Content of config.json."""
-    # job configuration
-    job: JobDict
+    # MPI execution configuration
+    mpi: ConfigDictMPI
 
     # custom format for ctx.load() and ctx.dump()
-    io: Dict[str, FormatDict]
+    io: Dict[str, ConfigDictIO]
 
     # default data that can be accessed by ctx[]
     data: dict
@@ -77,7 +77,7 @@ class Config:
     json_local = environ.get('STAGEKIT_CONFIG_LOCAL') or 'stagekit.config.json'
 
     # plain dict loaded from json files
-    raw_dict = config_default
+    raw_dict = default_config
 
     def __init__(self):
         # paths to load config from, priority: local > env > global
