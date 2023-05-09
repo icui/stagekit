@@ -68,25 +68,29 @@ def merge_dict(a, b):
 class Config:
     """Class for managing configurations."""
     # global configuration file
-    json_global = environ.get('STAGEKIT_CONFIG_FILE') or '~/.stagekit.config.json'
+    json_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or '~/.stagekit.config.json'
+
+    # configuration file of current environment
+    json_env = environ.get('STAGEKIT_CONFIG_ENV')
 
     # local configuration file
-    json_local = 'stagekit.config.json'
+    json_local = environ.get('STAGEKIT_CONFIG_LOCAL') or 'stagekit.config.json'
 
     # plain dict loaded from json files
     raw_dict = config_default
 
     def __init__(self):
-        try:
-            with open(self.json_global, 'r') as f:
-                merge_dict(self.raw_dict, json.load(f))
+        # paths to load config from, priority: local > env > global
+        paths = [self.json_global] +  (self.json_env.split(':') if self.json_env else []) + [self.json_local]
 
-            with open('stagekit.config.json', 'r') as f:
-                merge_dict(self.raw_dict, json.load(f))
+        for src in paths:
+            try:
+                with open(src, 'r') as f:
+                    merge_dict(self.raw_dict, json.load(f))
 
-        except:
-            pass
-    
+            except:
+                pass
+
     def save_local(self):
         pass
 
