@@ -5,7 +5,6 @@ from subprocess import check_call
 from glob import glob
 import pickle
 import toml
-from asyncio import sleep
 from typing import List, Iterable, Any
 
 from .wrapper import stage
@@ -77,6 +76,7 @@ class Directory:
 
         Args:
             cmd (str): Shell command.
+            cwd (str | None): Directory to execute the command relative to current context. Defaults to None.
         """
         if cwd is None:
             cwd = self.cwd
@@ -87,6 +87,10 @@ class Directory:
         from asyncio import create_subprocess_shell
         process = await create_subprocess_shell(cmd, cwd=cwd)
         await process.communicate()
+    
+    @stage
+    async def mpiexec(self, cmd: str):
+        """Execute a function or shell command with MPI or multiprocessing."""
 
     def rm(self, src: str = '.'):
         """Remove a file or a directory.
