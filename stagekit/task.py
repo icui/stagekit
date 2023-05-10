@@ -21,22 +21,3 @@ def create_task(coro: Coroutine, stage: Stage) -> Task:
     task._sk_stage = stage
     task._sk_is_stage = True
     return task
-
-
-def _task_factory(self, coro):
-    """Add a custom property to asyncio.Task to store the stage a task is created from."""
-    task = Task(coro, loop=self)
-
-    try:
-        task._sk_stage = asyncio.current_task()._sk_stage # type: ignore
-
-    except:
-        pass
-
-    return task
-
-
-def setup_task():
-    """Set asyncio task factory."""
-    loop = asyncio.get_running_loop()
-    loop.set_task_factory(_task_factory)

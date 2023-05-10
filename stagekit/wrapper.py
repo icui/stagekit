@@ -5,6 +5,7 @@ import asyncio
 from functools import wraps
 
 from .stage import Stage, current_stage
+from .task import Task
 
 if TYPE_CHECKING:
     from .context import Context
@@ -12,6 +13,19 @@ if TYPE_CHECKING:
 
 # current running context
 _ctx: Context
+
+
+def _task_factory(self, coro, context=None):
+    """Add a custom property to asyncio.Task to store the stage a task is created from."""
+    task = Task(coro, loop=self, context=context) # type: ignore
+
+    try:
+        task._sk_stage = asyncio.current_task()._sk_stage # type: ignore
+
+    except:
+        pass
+
+    return task
 
 
 class StageFunc:
@@ -44,7 +58,10 @@ class StageFunc:
             _ctx = ctx
 
             stage = Stage(self, args, kwargs, None, 0)
-            asyncio.run(main(stage))
+            with asyncio.Runner() as runner:
+                loop = runner.get_loop()
+                loop.set_task_factory(_task_factory)
+                runner.run(main(stage))
 
         else:
             # if root stage exists, run as a child of current stage

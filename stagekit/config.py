@@ -1,6 +1,6 @@
 import json
 from os import environ
-from typing import Tuple, Dict, List, TypedDict
+from typing import Tuple, Dict, List, TypedDict, NotRequired
 
 from .lib.config import default_config
 
@@ -18,6 +18,12 @@ class ConfigDictMPI(TypedDict, total=False):
 
     # total number of processes (set to None if this is determined from nnodes)
     nprocs: int
+
+    # number of CPUs per MPI process
+    cpus_per_proc: int
+
+    # number of GPUs per MPI process, use 1 / n if one GPU is shared by n processes through MPS
+    gpus_per_proc: int | float
 
     # import path and function to run MPI command
     mpiexec: Tuple[str, str]
@@ -38,11 +44,11 @@ class ConfigDictIO(TypedDict):
     load: Tuple[str, str]
 
     # import path and function name for saving the file
-    dump: Tuple[str, str]
+    dump: NotRequired[Tuple[str, str]]
 
 
 class ConfigDict(TypedDict):
-    """Content of config.json."""
+    """Content of config.toml."""
     # MPI execution configuration
     mpi: ConfigDictMPI
 
@@ -68,20 +74,20 @@ def merge_dict(a, b):
 class Config:
     """Class for managing configurations."""
     # global configuration file
-    json_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or '~/.stagekit.config.json'
+    path_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or '~/.stagekit.config.toml'
 
     # configuration file of current environment
-    json_env = environ.get('STAGEKIT_CONFIG_ENV')
+    path_env = environ.get('STAGEKIT_CONFIG_ENV')
 
-    # local configuration file
-    json_local = environ.get('STAGEKIT_CONFIG_LOCAL') or 'stagekit.config.json'
+    # configuration file of current workspace
+    path_local = environ.get('STAGEKIT_CONFIG_LOCAL') or 'stagekit.config.toml'
 
     # plain dict loaded from json files
     raw_dict = default_config
 
     def __init__(self):
         # paths to load config from, priority: local > env > global
-        paths = [self.json_global] +  (self.json_env.split(':') if self.json_env else []) + [self.json_local]
+        paths = [self.path_global] +  (self.path_env.split(':') if self.path_env else []) + [self.path_local]
 
         for src in paths:
             try:

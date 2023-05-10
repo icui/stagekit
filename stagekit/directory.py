@@ -4,7 +4,7 @@ from os import path, fsync
 from subprocess import check_call
 from glob import glob
 import pickle
-import toml
+import tomllib
 from typing import List, Iterable, Any
 
 from .wrapper import stage
@@ -285,8 +285,8 @@ class Directory:
                 return pickle.load(fb)
         
         elif ext == 'toml':
-            with open(self.path(src), 'r') as f:
-                return toml.load(f)
+            with open(self.path(src), 'rb') as f:
+                return tomllib.load(f)
         
         elif ext == 'json':
             import json
@@ -320,10 +320,6 @@ class Directory:
         if ext == 'pickle':
             with open(self.path(dst), 'wb') as fb:
                 pickle.dump(obj, fb)
-        
-        elif ext == 'toml':
-            with open(self.path(dst), 'w') as f:
-                toml.dump(obj, f)
         
         elif ext == 'json':
             import json

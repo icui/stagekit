@@ -4,7 +4,6 @@ from sys import stderr
 import asyncio
 
 from .stage import Stage, current_stage
-from .task import setup_task
 from .context import Context
 
 
@@ -18,8 +17,6 @@ async def main(stage: Stage):
     Args:
         stage (Stage): Main stage.
     """
-    setup_task()
-
     if ctx.root.has('stagekit.pickle'):
         # restore from saved state
         s = ctx.root.load('stagekit.pickle')
