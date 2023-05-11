@@ -1,4 +1,4 @@
-import json
+import tomllib
 from os import environ
 from typing import Tuple, Dict, List, TypedDict, NotRequired
 
@@ -71,37 +71,25 @@ def merge_dict(a, b):
             a[key] = b[key]
 
 
-class Config:
-    """Class for managing configurations."""
-    # global configuration file
-    path_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or '~/.stagekit.config.toml'
+# global configuration file
+path_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or '~/.stagekit.config.toml'
 
-    # configuration file of current environment
-    path_env = environ.get('STAGEKIT_CONFIG_ENV')
+# configuration file of current environment
+path_env = environ.get('STAGEKIT_CONFIG_ENV')
 
-    # configuration file of current workspace
-    path_local = environ.get('STAGEKIT_CONFIG_LOCAL') or 'stagekit.config.toml'
+# configuration file of current workspace
+path_local = environ.get('STAGEKIT_CONFIG_LOCAL') or 'stagekit.config.toml'
 
-    # plain dict loaded from json files
-    raw_dict = default_config
+# plain dict loaded from toml files
+config = default_config
 
-    def __init__(self):
-        # paths to load config from, priority: local > env > global
-        paths = [self.path_global] +  (self.path_env.split(':') if self.path_env else []) + [self.path_local]
+# paths to load config from, priority: local > env > global
+paths = [path_global] +  (path_env.split(':') if path_env else []) + [path_local]
 
-        for src in paths:
-            try:
-                with open(src, 'r') as f:
-                    merge_dict(self.raw_dict, json.load(f))
+for src in paths:
+    try:
+        with open(src, 'rb') as f:
+            merge_dict(config, tomllib.load(f))
 
-            except:
-                pass
-
-    def save_local(self):
+    except:
         pass
-
-    def save_global(self):
-        pass
-
-
-config = Config()

@@ -9,29 +9,29 @@ default_config: ConfigDict = {
     'mpi': {
         'name': 'stagekit',
         'nprocs': 1,
-        'mpiexec': ('stagekit.lib.clusters', 'local_mpiexec'),
-        'write': ('stagekit.lib.clusters', 'local_write'),
+        'mpiexec': ('stagekit.lib.clusters.local', 'mpiexec'),
+        'write': ('stagekit.lib.clusters.local', 'write'),
         'submit': 'python'
     },
     'io': {
         'json': {
             'ext': 'json',
-            'load': ('stagekit.lib.io', 'json_load'),
-            'dump': ('stagekit.lib.io', 'json_dump')
+            'load': ('stagekit.lib.io.json', 'load'),
+            'dump': ('stagekit.lib.io.json', 'dump')
         },
         'toml': {
             'ext': 'toml',
-            'load': ('stagekit.lib.io', 'toml_load')
+            'load': ('stagekit.lib.io.toml', 'load')
         },
         'pickle': {
             'ext': ['pickle', 'pkl'],
-            'load': ('stagekit.lib.io', 'pickle_load'),
-            'dump': ('stagekit.lib.io', 'pickle_dump')
+            'load': ('stagekit.lib.io.pickle', 'load'),
+            'dump': ('stagekit.lib.io.pickle', 'dump')
         },
         'numpy': {
             'ext': 'npy',
-            'load': ('stagekit.lib.io', 'numpy_load'),
-            'dump': ('stagekit.lib.io', 'numpy_dump')
+            'load': ('stagekit.lib.io.numpy', 'load'),
+            'dump': ('stagekit.lib.io.numpy', 'dump')
         }
     },
     'data': {}

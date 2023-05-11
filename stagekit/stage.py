@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import Any, List, Mapping, Iterable, Callable, Set, TYPE_CHECKING
 import asyncio
-from .task import create_task
 
+from .task import create_task
+from .config import config
 
 if TYPE_CHECKING:
     from .wrapper import StageFunc
@@ -15,7 +16,7 @@ class Stage:
         do not create a stage directly with Stage(), use decorator @stage instead."""
     # (both static and non-static property) data defined by stage function accessed through ctx
     # use static property Stage.data as root of inheritance
-    data: dict = {}
+    data: dict = config['data']
 
     # stage function
     func: StageFunc

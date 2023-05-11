@@ -3,11 +3,15 @@ from __future__ import annotations
 from os import path, fsync
 from subprocess import check_call
 from glob import glob
-import pickle
-import tomllib
+from importlib import import_module
 from typing import List, Iterable, Any
 
 from .wrapper import stage
+from .config import config
+
+
+# imported functions for load() and dump()
+_io = { 'load': {}, 'dump': {} }
 
 
 class Directory:
@@ -264,6 +268,26 @@ class Directory:
 
         self.write('\n'.join(lines), dst, mode)
     
+    def _import_io(self, src: str, ext: str | None, mode: str):
+        if ext is None:
+            e = src.split('.')[-1]
+            
+            for key in config['io']:
+                m = config['io'][key]['ext']
+
+                if m == e or (isinstance(m, list) and e in m):
+                    ext = key
+                    break
+
+        if ext not in _io[mode] and ext in config['io'] and mode in config['io'][ext]:
+            mod, func = config['io'][ext][mode]
+            _io[mode][ext] = getattr(import_module(mod), func)
+
+        if ext not in _io[mode]:
+            raise TypeError(f'unsupported file extension {ext}')
+
+        return ext
+
     def load(self, src: str, ext: str | None = None) -> Any:
         """Load a pickle / toml / json / npy file.
 
@@ -277,28 +301,9 @@ class Directory:
         Returns:
             Any: Content of the file.
         """
-        if ext is None:
-            ext = src.split('.')[-1] # type: ignore
-        
-        if ext == 'pickle':
-            with open(self.path(src), 'rb') as fb:
-                return pickle.load(fb)
-        
-        elif ext == 'toml':
-            with open(self.path(src), 'rb') as f:
-                return tomllib.load(f)
-        
-        elif ext == 'json':
-            import json
-            with open(self.path(src), 'r') as f:
-                return json.load(f)
-        
-        elif ext == 'npy':
-            import numpy as np
-            return np.load(self.path(src))
-        
-        else:
-            raise TypeError(f'unsupported file type {ext}')
+        ext = self._import_io(src, ext, 'load')
+
+        return _io['load'][ext](self.path(src))
     
     def dump(self, obj, dst: str, ext: str | None = None, *, mkdir: bool = True):
         """Dump a pickle / toml / json / npy file.
@@ -314,21 +319,6 @@ class Directory:
         if mkdir:
             self.mkdir(path.dirname(dst))
 
-        if ext is None:
-            ext = dst.split('.')[-1]
-
-        if ext == 'pickle':
-            with open(self.path(dst), 'wb') as fb:
-                pickle.dump(obj, fb)
+        ext = self._import_io(dst, ext, 'dump')
         
-        elif ext == 'json':
-            import json
-            with open(self.path(dst), 'w') as f:
-                json.dump(obj, f)
-        
-        elif ext == 'npy':
-            import numpy as np
-            return np.save(self.path(dst), obj)
-        
-        else:
-            raise TypeError(f'unsupported file type {ext}')
+        return _io['dump'][ext](obj, self.path(dst))
