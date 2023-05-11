@@ -5,55 +5,53 @@ from typing import Tuple, Dict, List, TypedDict, NotRequired
 from .lib.config import default_config
 
 
-class ConfigDictMPI(TypedDict, total=False):
-    """Job configuration."""
-    # inherit from and existing configuration
-    inherit: str
+class ConfigDictJob(TypedDict):
+    """Job configuration"""
+    # Job scheduler
+    system: str
 
     # job name
-    name: str
+    name: NotRequired[str]
 
     # number of nodes to request and run MPI tasks (set to None if this is determined from nprocs)
     nnodes: int
 
-    # total number of processes (set to None if this is determined from nnodes)
-    nprocs: int
 
-    # number of CPUs per MPI process
-    cpus_per_proc: int
+# class ConfigDictSystem(TypedDict, total=False):
+#     """Job scheduler configuration."""
+#     # inherit from and existing configuration
+#     system: str
 
-    # number of GPUs per MPI process, use 1 / n if one GPU is shared by n processes through MPS
-    gpus_per_proc: int | float
+#     # whether a node can be shared by multiple MPI calls
+#     share_node: bool
 
-    # import path and function to run MPI command
-    mpiexec: Tuple[str, str]
+#     # whether a gpu can be shared by multiple MPI processes (multi-process service)
+#     share_gpu: bool
 
-    # import path and function to write job script
-    write: Tuple[str, str]
+#     # number of cpus per node
+#     cpus_per_node: int
 
-    # command to submit a job script
-    submit: str
+#     # number of gpus per node
+#     gpus_per_node: int
 
+#     # module that contains mpiexec() and write()
+#     module: str
 
-class ConfigDictIO(TypedDict):
-    """Custom format for ctx.load() and ctx.dump()."""
-    # extension name
-    ext: str | List[str]
+#     # command to submit a job script
+#     submit: str
 
-    # import path and function name for reading the file
-    load: Tuple[str, str]
-
-    # import path and function name for saving the file
-    dump: NotRequired[Tuple[str, str]]
 
 
 class ConfigDict(TypedDict):
     """Content of config.toml."""
-    # MPI execution configuration
-    mpi: ConfigDictMPI
+    # job configuration
+    job: ConfigDictJob
+
+    # job scheduler
+    system: Dict[str, str]
 
     # custom format for ctx.load() and ctx.dump()
-    io: Dict[str, ConfigDictIO]
+    io: Dict[str, str]
 
     # default data that can be accessed by ctx[]
     data: dict
@@ -80,7 +78,7 @@ path_env = environ.get('STAGEKIT_CONFIG_ENV')
 # configuration file of current workspace
 path_local = environ.get('STAGEKIT_CONFIG_LOCAL') or 'stagekit.config.toml'
 
-# plain dict loaded from toml files
+# default config from stagekit module
 config = default_config
 
 # paths to load config from, priority: local > env > global

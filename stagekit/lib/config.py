@@ -6,33 +6,20 @@ if TYPE_CHECKING:
 
 
 default_config: ConfigDict = {
-    'mpi': {
+    'job': {
+        'system': 'local',
         'name': 'stagekit',
-        'nprocs': 1,
-        'mpiexec': ('stagekit.lib.clusters.local', 'mpiexec'),
-        'write': ('stagekit.lib.clusters.local', 'write'),
-        'submit': 'python'
+        'nnodes': 1
+    },
+    'system': {
+        'local': 'stagekit.lib.system.local'
     },
     'io': {
-        'json': {
-            'ext': 'json',
-            'load': ('stagekit.lib.io.json', 'load'),
-            'dump': ('stagekit.lib.io.json', 'dump')
-        },
-        'toml': {
-            'ext': 'toml',
-            'load': ('stagekit.lib.io.toml', 'load')
-        },
-        'pickle': {
-            'ext': ['pickle', 'pkl'],
-            'load': ('stagekit.lib.io.pickle', 'load'),
-            'dump': ('stagekit.lib.io.pickle', 'dump')
-        },
-        'numpy': {
-            'ext': 'npy',
-            'load': ('stagekit.lib.io.numpy', 'load'),
-            'dump': ('stagekit.lib.io.numpy', 'dump')
-        }
+        'json': 'stagekit.lib.io.json',
+        'toml': 'stagekit.lib.io.toml',
+        'pickle': 'stagekit.lib.io.pickle',
+        'pkl': 'stagekit.lib.io.pickle',
+        'npy': 'stagekit.lib.io.numpy'
     },
     'data': {}
 }
