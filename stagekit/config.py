@@ -17,31 +17,6 @@ class ConfigDictJob(TypedDict):
     nnodes: int
 
 
-# class ConfigDictSystem(TypedDict, total=False):
-#     """Job scheduler configuration."""
-#     # inherit from and existing configuration
-#     system: str
-
-#     # whether a node can be shared by multiple MPI calls
-#     share_node: bool
-
-#     # whether a gpu can be shared by multiple MPI processes (multi-process service)
-#     share_gpu: bool
-
-#     # number of cpus per node
-#     cpus_per_node: int
-
-#     # number of gpus per node
-#     gpus_per_node: int
-
-#     # module that contains mpiexec() and write()
-#     module: str
-
-#     # command to submit a job script
-#     submit: str
-
-
-
 class ConfigDict(TypedDict):
     """Content of config.toml."""
     # job configuration
