@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Mapping, Iterable, TYPE_CHECKING
+from typing import Any, List, Dict, Mapping, Iterable, TYPE_CHECKING
 import asyncio
 
 from .task import create_task
@@ -22,10 +22,10 @@ class Stage:
     func: StageFunc
 
     # arguments of self.func
-    args: Iterable[Any]
+    args: List[Any]
 
     # keyword arguments of self.func
-    kwargs: Mapping[str, Any]
+    kwargs: Dict[str, Any]
 
     # working directory relative to parent stage
     cwd: str | None
@@ -56,8 +56,8 @@ class Stage:
 
     def __init__(self, func: StageFunc, args: Iterable[Any], kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
         self.func = func
-        self.args = args
-        self.kwargs = kwargs
+        self.args = list(args)
+        self.kwargs = dict(kwargs)
         self.cwd = cwd
         self.parent_version = parent_version
 
@@ -65,11 +65,44 @@ class Stage:
         self.data = {}
 
     def __eq__(self, stage: Stage | None):
-        if stage:
-            return self.func == stage.func and \
-                self.args == stage.args and \
-                self.kwargs == stage.kwargs and \
-                self.cwd == stage.cwd
+        if isinstance(stage, Stage):
+            if self.func != stage.func:
+                return False
+        
+            if self.cwd != stage.cwd:
+                return False
+
+            if len(self.args) != len(stage.args):
+                return False
+
+            if len(self.kwargs) != len(stage.kwargs):
+                return False
+
+            skips = set()
+
+            if isinstance(self.func.skip, str):
+                skips.add(self.func.skip)
+            
+            elif self.func.skip:
+                skips.update(self.func.skip)
+            
+            co_varnames = self.func.func.__code__.co_varnames
+
+            for i in range(len(self.args)):
+                if co_varnames[i] in skips:
+                    continue
+
+                if self.args[i] != stage.args[i]:
+                    return False
+            
+            for k in self.kwargs:
+                if k in skips:
+                    continue
+
+                if self.kwargs[k] != stage.kwargs[k]:
+                    return False
+
+            return True
 
         return False
 
@@ -114,6 +147,8 @@ class Stage:
                     # (2) stage is set to alwarys re-run
                     # (3) stage is set to auto re-run and stage has child stage
                     s.func = stage.func
+                    s.args = stage.args
+                    s.kwargs = stage.kwargs
                     s.rerun = s.done
                     s.done = False
                     await create_task(s.execute(ctx), s)
