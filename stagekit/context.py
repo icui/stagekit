@@ -4,7 +4,6 @@ from os import path
 from asyncio import sleep
 from traceback import format_exc
 from sys import stderr
-from typing import Literal
 
 from .stage import Stage, current_stage
 from .directory import Directory
@@ -24,6 +23,27 @@ class Context(Directory):
 
     # working directory relative to current stage directory
     _chdir: str | None = None
+
+    @property
+    def cwd(self):
+        """Current working directory."""
+        paths = []
+
+        if self._chdir is not None:
+            paths.append(self._chdir)
+
+        current = current_stage()
+
+        while current:
+            if current.cwd is not None:
+                paths.append(current.cwd)
+            
+            current = current.parent
+        
+        paths.append('.')
+        paths.reverse()
+
+        return path.normpath(path.join(*paths))
 
     def __init__(self):
         self.root = Directory()
@@ -45,9 +65,6 @@ class Context(Directory):
     def __setitem__(self, key, val):
         (current_stage() or Stage).data[key] = val
 
-    def __eq__(self, ctx):
-        return self._chdir == ctx._chdir
-
     def goto(self, cwd: str | None = None):
         """Change working directory.
 
@@ -59,23 +76,13 @@ class Context(Directory):
 
         self._chdir = cwd
 
-        paths = []
-
-        if self._chdir is not None:
-            paths.append(self._chdir)
-
-        current = current_stage()
-
-        while current:
-            if current.cwd is not None:
-                paths.append(current.cwd)
-            
-            current = current.parent
+    @property
+    def rerun(self):
+        """Stage has previously been executed, re-running because stage has rerun flag on."""
+        if stage := current_stage():
+            return stage.rerun
         
-        paths.append('.')
-        paths.reverse()
-
-        self._cwd = path.normpath(path.join(*paths))
+        return False
 
     async def checkpoint(self):
         """Save root stage to stagekit.pickle one second later."""

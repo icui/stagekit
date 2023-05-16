@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Mapping, Iterable, Callable, Set, TYPE_CHECKING
+from typing import Any, List, Mapping, Iterable, TYPE_CHECKING
 import asyncio
 
 from .task import create_task
@@ -42,6 +42,9 @@ class Stage:
     # main function successfully executed
     done = False
 
+    # re-running existing stage
+    rerun = False
+
     # error occured during execution
     error: Exception | None = None
 
@@ -75,24 +78,18 @@ class Stage:
         # initialize state
         self.done = False
         self.version += 1
-        ctx.goto()
 
-        if self.func.obj:
-            result = self.func.func(self.func.obj, *self.args, **self.kwargs)
-        
-        else:
-            result = self.func.func(*self.args, **self.kwargs)
+        result = self.func.func(*self.args, **self.kwargs)
 
         if asyncio.iscoroutine(result):
             result = await result
 
         self.result = result
-        
+
         # remove outdated child stages
         self.history = list(filter(lambda s: s.parent_version == self.version, self.history))
 
         # save execution state
-        ctx.goto()
         self.done = True
         asyncio.create_task(ctx.checkpoint())
 
@@ -117,6 +114,8 @@ class Stage:
                     # (2) stage is set to alwarys re-run
                     # (3) stage is set to auto re-run and stage has child stage
                     s.func = stage.func
+                    s.rerun = s.done
+                    s.done = False
                     await create_task(s.execute(ctx), s)
                 
                 s.parent_version = stage.parent_version

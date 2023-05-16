@@ -4,7 +4,7 @@ from os import path, fsync
 from subprocess import check_call
 from glob import glob
 from importlib import import_module
-from typing import List, Iterable, Any
+from typing import List, Iterable, Awaitable, Any
 
 from .wrapper import stage
 from .config import config
@@ -12,6 +12,19 @@ from .config import config
 
 # imported functions for load() and dump()
 _io = { 'load': {}, 'dump': {} }
+
+
+@stage
+async def _call(self, cmd: str, cwd: str | None):
+    if cwd is None:
+        cwd = self.cwd
+    
+    else:
+        cwd = path.join(self.cwd, cwd)
+
+    from asyncio import create_subprocess_shell
+    process = await create_subprocess_shell(cmd, cwd=cwd)
+    await process.communicate()
 
 
 class Directory:
@@ -74,23 +87,14 @@ class Directory:
         """
         return path.exists(self.path(src))
 
-    @stage
-    async def call(self, cmd: str, cwd: str | None = None):
+    def call(self, cmd: str, cwd: str | None = None) -> Awaitable[None]:
         """Call a shell command asynchronously.
 
         Args:
             cmd (str): Shell command.
             cwd (str | None): Directory to execute the command relative to current context. Defaults to None.
         """
-        if cwd is None:
-            cwd = self.cwd
-        
-        else:
-            cwd = path.join(self.cwd, cwd)
-
-        from asyncio import create_subprocess_shell
-        process = await create_subprocess_shell(cmd, cwd=cwd)
-        await process.communicate()
+        return _call(self, cmd, cwd)
     
     @stage
     async def mpiexec(self, cmd: str):

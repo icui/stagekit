@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import ParamSpec, Awaitable, Callable, Any, Literal, TYPE_CHECKING, overload
+from typing import ParamSpec, Awaitable, Callable, Any, Literal, Iterable, TYPE_CHECKING, overload
 from importlib import import_module
 import asyncio
-from functools import wraps
 
 from .stage import Stage, current_stage
 from .task import Task
@@ -39,13 +38,13 @@ class StageFunc:
     # 'auto': re-run only if stage has at least one child stage (because by design, stages with child stages should be cheap to run)
     rerun: bool | Literal['auto']
 
-    # class instance if function is a class method
-    obj: object | None
+    # ignore argument(s) in comparing and saving
+    skip: None | str | Iterable[str]
 
-    def __init__(self, func: Callable, rerun: bool | Literal['auto'], obj: object | None):
+    def __init__(self, func: Callable, rerun: bool | Literal['auto'], skip: None | str | Iterable[str]):
         self.func = func
         self.rerun = rerun
-        self.obj = obj
+        self.skip = skip
     
     def __call__(self, *args, **kwargs):
         current = current_stage()
@@ -70,21 +69,12 @@ class StageFunc:
             return current.progress(stage, _ctx)
 
     def __getstate__(self):
-        if self.obj:
-            return {'o': self.obj, 'f': self.func.__name__, 'r': self.rerun}
-
-        return {'m': self.func.__module__, 'n': self.func.__name__, 'r': self.rerun}
+        return {'m': self.func.__module__, 'n': self.func.__name__, 'r': self.rerun, 's': self.skip}
 
     def __setstate__(self, state: dict):
-        if 'o' in state:
-            self.func = getattr(state['o'], state['f']).__wrapped__
-            self.obj = state['o']
-        
-        else:
-            self.func = getattr(import_module(state['m']), state['n']).func
-            self.obj = None
-        
+        self.func = getattr(import_module(state['m']), state['n']).func
         self.rerun = state['r']
+        self.skip = state['s']
 
     def __eq__(self, func):
         if isinstance(func, StageFunc):
@@ -102,9 +92,9 @@ Q = ParamSpec('Q')
 def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
 
 @overload
-def stage(*, rerun: bool | Literal['auto']) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
+def stage(*, rerun: bool | Literal['auto'] = 'auto', skip: None | str | Iterable[str] = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
 
-def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto') -> \
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', skip: None | str | Iterable[str] = None) -> \
     Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]] | Callable[P, Awaitable[Any]]:
     """Function wrapper that creates a stage to execute the function.
         If decorated function is a class method, be sure to define __eq__ of the class, otherwise the progress may not be saved.
@@ -114,16 +104,6 @@ def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto']
         rerun (bool | Literal['auto']): Whether or not to re-run existing stage function.
     """
     if func is None:
-        return lambda f: _wrap(f, rerun)
+        return lambda f: StageFunc(f, rerun, skip) # type: ignore
     
-    return _wrap(func, 'auto')
-
-def _wrap(func: Callable[P, Any], rerun: bool | Literal['auto']) -> Any:
-    if '.' in func.__qualname__:
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            return StageFunc(func, 'auto', self)(*args, **kwargs)
-        
-        return wrapper
-
-    return StageFunc(func, rerun, None)
+    return StageFunc(func, 'auto', None) # type: ignore
