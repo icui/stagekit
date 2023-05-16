@@ -63,6 +63,24 @@ class Stage:
 
         self.history = []
         self.data = {}
+    
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        args = state['args'] = state['args'].copy()
+        kwargs = state['kwargs'] = state['kwargs'].copy()
+
+        skip = self.func.skip
+        co_varnames = self.func.func.__code__.co_varnames
+
+        for i in range(len(args)):
+            if co_varnames[i] in skip:
+                args[i] = None
+        
+        for k in kwargs:
+            if k in skip:
+                kwargs[k] = None
+        
+        return state
 
     def __eq__(self, stage: Stage | None):
         if isinstance(stage, Stage):
@@ -78,25 +96,18 @@ class Stage:
             if len(self.kwargs) != len(stage.kwargs):
                 return False
 
-            skips = set()
-
-            if isinstance(self.func.skip, str):
-                skips.add(self.func.skip)
-            
-            elif self.func.skip:
-                skips.update(self.func.skip)
-            
+            skip = self.func.skip
             co_varnames = self.func.func.__code__.co_varnames
 
             for i in range(len(self.args)):
-                if co_varnames[i] in skips:
+                if co_varnames[i] in skip:
                     continue
 
                 if self.args[i] != stage.args[i]:
                     return False
             
             for k in self.kwargs:
-                if k in skips:
+                if k in skip:
                     continue
 
                 if self.kwargs[k] != stage.kwargs[k]:

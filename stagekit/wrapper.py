@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import ParamSpec, Awaitable, Callable, Any, Literal, Iterable, TYPE_CHECKING, overload
+from typing import ParamSpec, Awaitable, Set, Callable, Any, Literal, Iterable, TYPE_CHECKING, overload
 from importlib import import_module
 import asyncio
 
@@ -39,12 +39,18 @@ class StageFunc:
     rerun: bool | Literal['auto']
 
     # ignore argument(s) in comparing and saving
-    skip: None | str | Iterable[str]
+    skip: Set[str]
 
     def __init__(self, func: Callable, rerun: bool | Literal['auto'], skip: None | str | Iterable[str]):
         self.func = func
         self.rerun = rerun
-        self.skip = skip
+
+        self.skip = set()
+        if isinstance(skip, str):
+            self.skip.add(skip)
+
+        elif skip:
+            self.skip.update(skip)
     
     def __call__(self, *args, **kwargs):
         current = current_stage()
