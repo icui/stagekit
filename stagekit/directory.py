@@ -14,7 +14,7 @@ from .config import config
 _io = { 'load': {}, 'dump': {} }
 
 
-@stage(skip='self')
+@stage(match={'self': lambda s: s.cwd})
 async def _call(self, cmd: str, cwd: str | None):
     if cwd is None:
         cwd = self.cwd

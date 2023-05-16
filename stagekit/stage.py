@@ -54,6 +54,9 @@ class Stage:
     # number of times parent stage is executed
     parent_version: int
 
+    # args and kwargs are restored from a saved state
+    restored = False
+
     def __init__(self, func: StageFunc, args: Iterable[Any], kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
         self.func = func
         self.args = list(args)
@@ -66,56 +69,38 @@ class Stage:
     
     def __getstate__(self):
         state = self.__dict__.copy()
-        args = state['args'] = state['args'].copy()
-        kwargs = state['kwargs'] = state['kwargs'].copy()
+        state['args'], state['kwargs'] = self.match()
+        state['restored'] = True
 
-        skip = self.func.skip
-        co_varnames = self.func.func.__code__.co_varnames
-
-        for i in range(len(args)):
-            if co_varnames[i] in skip:
-                args[i] = None
-        
-        for k in kwargs:
-            if k in skip:
-                kwargs[k] = None
-        
         return state
 
     def __eq__(self, stage: Stage | None):
         if isinstance(stage, Stage):
-            if self.func != stage.func:
-                return False
-        
-            if self.cwd != stage.cwd:
-                return False
-
-            if len(self.args) != len(stage.args):
-                return False
-
-            if len(self.kwargs) != len(stage.kwargs):
-                return False
-
-            skip = self.func.skip
-            co_varnames = self.func.func.__code__.co_varnames
-
-            for i in range(len(self.args)):
-                if co_varnames[i] in skip:
-                    continue
-
-                if self.args[i] != stage.args[i]:
-                    return False
-            
-            for k in self.kwargs:
-                if k in skip:
-                    continue
-
-                if self.kwargs[k] != stage.kwargs[k]:
-                    return False
-
-            return True
+            return self.func == stage.func and self.cwd == stage.cwd and self.match() == stage.match()
 
         return False
+    
+    def match(self):
+        """Transform arguments based on the `match` argument of @stage decorator."""
+        args = self.args.copy()
+        kwargs = self.kwargs.copy()
+
+        if self.restored:
+            return args, kwargs
+
+        match = self.func.match
+        co_varnames = self.func.func.__code__.co_varnames
+
+        for i in range(len(args)):
+            k = co_varnames[i]
+            if k in match:
+                args[i] = None if match[k] is None else match[k](args[i]) # type: ignore
+        
+        for k in kwargs:
+            if k in match:
+                kwargs[k] = None if match[k] is None else match[k](kwargs[k]) # type: ignore
+        
+        return args, kwargs
 
     async def execute(self, ctx: Context):
         """Execute main function."""
@@ -162,6 +147,7 @@ class Stage:
                     s.kwargs = stage.kwargs
                     s.rerun = s.done
                     s.done = False
+                    s.restored = False
                     await create_task(s.execute(ctx), s)
                 
                 s.parent_version = stage.parent_version
