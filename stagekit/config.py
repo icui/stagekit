@@ -1,11 +1,11 @@
 import tomllib
 from os import environ
-from typing import Tuple, Dict, List, TypedDict, NotRequired
+from typing import Dict, TypedDict, NotRequired
 
 from .lib.config import default_config
 
 
-class ConfigDictJob(TypedDict):
+class JobDict(TypedDict):
     """Job configuration"""
     # Job scheduler
     system: str
@@ -13,16 +13,22 @@ class ConfigDictJob(TypedDict):
     # job name
     name: NotRequired[str]
 
-    # number of nodes to request and run MPI tasks (set to None if this is determined from nprocs)
-    nnodes: int
+    # number of nodes to request and run MPI tasks, defaults to 1
+    nnodes: NotRequired[int]
+
+    # overwrite cpus_per_node defined by system
+    cpus_per_node: NotRequired[int]
+
+    # overwrite gpus_per_node defined by system
+    gpus_per_node: NotRequired[int]
 
 
 class ConfigDict(TypedDict):
     """Content of config.toml."""
     # job configuration
-    job: ConfigDictJob
+    job: JobDict
 
-    # job scheduler
+    # job scheduler configuration
     system: Dict[str, str]
 
     # custom format for ctx.load() and ctx.dump()
@@ -58,6 +64,7 @@ config = default_config
 
 # paths to load config from, priority: local > env > global
 paths = [path_global] +  (path_env.split(':') if path_env else []) + [path_local]
+
 
 for src in paths:
     try:

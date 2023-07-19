@@ -16,13 +16,10 @@ _io = { 'load': {}, 'dump': {} }
 
 @stage(match={'self': lambda s: s.cwd})
 async def _call(self, cmd: str, cwd: str | None):
-    if cwd is None:
-        cwd = self.cwd
-    
-    else:
-        cwd = path.join(self.cwd, cwd)
-
     from asyncio import create_subprocess_shell
+
+    cwd = self.cwd if cwd is None else path.join(self.cwd, cwd)
+
     process = await create_subprocess_shell(cmd, cwd=cwd)
     await process.communicate()
 
@@ -95,10 +92,12 @@ class Directory:
             cwd (str | None): Directory to execute the command relative to current context. Defaults to None.
         """
         return _call(self, cmd, cwd)
-    
-    @stage
-    async def mpiexec(self, cmd: str):
+
+    def mpiexec(self, cmd: str, nprocs: int, cpus_per_proc: int):
         """Execute a function or shell command with MPI or multiprocessing."""
+
+    def custom_mpiexec(self, cmd: str, res: int | Fraction):
+        """."""
 
     def rm(self, src: str = '.'):
         """Remove a file or a directory.

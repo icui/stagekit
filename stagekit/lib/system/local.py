@@ -3,11 +3,13 @@ from .system import System
 
 class Local(System):
     """Run tasks locally."""
-    def submit(self):
-        pass
+    submit = 'python'
 
     def mpiexec(self):
         pass
 
-    def write(self):
-        pass
+    def write(self, main: str):
+        return main
+
+
+__all__ = ['Local']

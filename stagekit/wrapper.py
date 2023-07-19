@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import ParamSpec, Awaitable, Dict, Callable, Any, Literal, Iterable, TYPE_CHECKING, overload
+from typing import ParamSpec, Awaitable, Dict, Callable, Any, Literal, TYPE_CHECKING, cast, overload
 from importlib import import_module
 import asyncio
 
@@ -94,23 +94,25 @@ class StageFunc:
 P = ParamSpec('P')
 Q = ParamSpec('Q')
 
+# type of wrapped functions or parameters (return value of @stage)
+WrappedFunc = Callable[P, Awaitable[Any]]
+WrappedParams = Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]
+
 
 @overload
-def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
+def stage(func: Callable[P, Any]) -> WrappedFunc: ...
 
 @overload
-def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
+def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> WrappedParams: ...
 
-def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> \
-    Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]] | Callable[P, Awaitable[Any]]:
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> WrappedParams | WrappedFunc:
     """Function wrapper that creates a stage to execute the function.
-        If decorated function is a class method, be sure to define __eq__ of the class, otherwise the progress may not be saved.
 
     Args:
         func (Callable): Function to create stage from.
         rerun (bool | Literal['auto']): Whether or not to re-run existing stage function.
     """
     if func is None:
-        return lambda f: StageFunc(f, rerun, match) # type: ignore
+        return cast(WrappedParams, lambda f: StageFunc(f, rerun, match))
     
-    return StageFunc(func, 'auto', None) # type: ignore
+    return cast(WrappedFunc, StageFunc(func, 'auto', None))
