@@ -23,7 +23,7 @@ class System(ABC):
     @abstractmethod
     def mpiexec(self, cmd: str | Callable[[], Any] | Callable[[str], Any],
         nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[int, int] = 0, *,
-        multiprocessing: bool = False, custom_mpiexec: bool = False, custom_nnodes: int | Tuple[int, int] | None = None,
+        multiprocessing: bool = False, custom_mpiexec: str | None = None, custom_nnodes: int | Tuple[int, int] | None = None,
         args: Iterable[str] | None = None, group_args: bool = False,
         fname: str | None = None, check_output: Callable[..., None] | None,
         timeout: Literal['auto'] | float | None, ontimeout: Literal['raise'] | Callable[[], None] | None,

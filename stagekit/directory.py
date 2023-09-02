@@ -96,9 +96,6 @@ class Directory:
     def mpiexec(self, cmd: str, nprocs: int, cpus_per_proc: int):
         """Execute a function or shell command with MPI or multiprocessing."""
 
-    def custom_mpiexec(self, cmd: str, res: int | Fraction):
-        """."""
-
     def rm(self, src: str = '.'):
         """Remove a file or a directory.
 
