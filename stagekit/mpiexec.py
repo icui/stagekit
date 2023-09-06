@@ -24,13 +24,17 @@ _running: Dict[asyncio.Lock, Fraction | int] = {}
 _system : System = cast(System, None)
 
 
-def _dispatch(lock: asyncio.Lock, nnodes: Fraction | int) -> bool:
-    """Execute a task if resource is available."""
+def define_system(system_name):
+    """Define job system."""
     global _system
 
+    _system = import_module(system_name).sk_system()
+
+
+def _dispatch(lock: asyncio.Lock, nnodes: Fraction | int) -> bool:
+    """Execute a task if resource is available."""
     if _system is None:
-        mod = import_module(config['system'][config['job']['system']])
-        _system = getattr(mod, mod.__all__[0])()
+        define_system(config['system'][config['job']['system']])
 
     # use multiprocessing if nnodes is int
     mp = isinstance(nnodes, int)

@@ -12,4 +12,4 @@ class Local(System):
         return main
 
 
-__all__ = ['Local']
+sk_system = Local
