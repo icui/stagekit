@@ -3,7 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 stagekit.pickle
-tests
 .stagekit
 
 # C extensions
