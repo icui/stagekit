@@ -40,6 +40,7 @@ config: Config = {
     },
     'modules': [
         'stagekit.lib.job.local',
+        'stagekit.lib.job.slurm',
         'stagekit.lib.io.json',
         'stagekit.lib.io.toml',
         'stagekit.lib.io.pickle',
