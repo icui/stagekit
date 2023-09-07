@@ -1,6 +1,7 @@
 import tomllib
 from os import environ
 from typing import List, TypedDict
+from os.path import expanduser
 
 
 class Config(TypedDict):
@@ -28,7 +29,7 @@ def merge_dict(a, b):
 
 
 # global configuration file
-path_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or '~/.stagekit.config.toml'
+path_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or expanduser('~/.stagekit.config.toml')
 
 # configuration file of current workspace
 path_local = environ.get('STAGEKIT_CONFIG_LOCAL') or './config.toml'
