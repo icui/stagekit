@@ -7,14 +7,12 @@ from datetime import timedelta
 from fractions import Fraction
 from inspect import signature
 from os.path import join
+from sys import stderr
 
 from .directory import Directory
 from .config import config
 from .wrapper import stage
-from .lib.job.job import _jobs
-
-if TYPE_CHECKING:
-    from .lib.job.job import Job
+from .lib.job.job import Job, _job_cls
 
 
 class InsufficientWalltime(TimeoutError):
@@ -40,11 +38,11 @@ def _dispatch(lock: asyncio.Lock, nnodes: Fraction | int) -> bool:
 
     if mp:
         # task is executed with multiprocessing
-        ntotal = config['job'].get('cpus_per_node') or _job.cpus_per_node
+        ntotal = _job.cpus_per_node
 
     else:
         # task is executed with MPI
-        ntotal = config['job'].get('nnodes') or 1
+        ntotal = _job.nnodes
 
     nrunning = sum(v for v in _running.values() if isinstance(v, int) == mp)
 
@@ -85,7 +83,7 @@ async def mpiexec(cwd: str | None, cmd: str | Callable[[], Any] | Callable[[str]
     global _task
 
     if _job is None:
-        _job = _jobs[config['job']['job']](config['job'])
+        _job = _job_cls[config['job']['job']](config['job'])
 
     # remove unused proceesses
     if mpiargs:
@@ -183,7 +181,7 @@ async def mpiexec(cwd: str | None, cmd: str | Callable[[], Any] | Callable[[str]
                 cmd += ' ' + ' '.join(list(str(arg) for arg in args))
 
             if mpiargs:
-                print('warning: mpiargs is ignored')
+                print('warning: mpiargs is ignored', file=stderr)
 
             args = None
             mpiargs = None

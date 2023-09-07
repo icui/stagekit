@@ -3,12 +3,11 @@ from __future__ import annotations
 from os import path, fsync
 from subprocess import check_call
 from glob import glob
-from importlib import import_module
 from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple
 
 from .wrapper import stage
 from .config import config
-from .runner import mpiexec
+from .lib.io.io import get_io
 
 
 @stage(match={'self': lambda s: s.cwd})
@@ -113,6 +112,8 @@ class Directory:
             timeout (Literal['auto'] | float | None): Action when running out of walltime.
             priority (int | None, optional): Priority of the job execution. Defaults to None.
         """
+        from .runner import mpiexec
+
         return mpiexec(self.cwd, cmd,
             nprocs, cpus_per_proc, gpus_per_proc, multiprocessing,
             custom_exec, custom_nnodes, args, mpiargs, fname,
@@ -289,18 +290,6 @@ class Directory:
             self.mkdir(path.dirname(dst))
 
         self.write('\n'.join(lines), dst, mode)
-    
-    def _import_io(self, ext: str | None, mode: str):
-        if ext not in _io[mode] and ext in config['io']:
-            mod = import_module(config['io'][ext])
-
-            if hasattr(mod, mode):
-                _io[mode][ext] = getattr(mod, mode)
-
-        if ext not in _io[mode]:
-            raise TypeError(f'unsupported file extension {ext}')
-
-        return ext
 
     def load(self, src: str, ext: str | None = None) -> Any:
         """Load a pickle / toml / json / npy file.
@@ -318,9 +307,7 @@ class Directory:
         if ext is None:
             ext = src.split('.')[-1]
 
-        self._import_io(ext, 'load')
-
-        return _io['load'][ext](self.path(src))
+        return get_io(ext).load(self.path(src))
     
     def dump(self, obj, dst: str, ext: str | None = None, *, mkdir: bool = True):
         """Dump a pickle / toml / json / npy file.
@@ -338,7 +325,5 @@ class Directory:
 
         if ext is None:
             ext = dst.split('.')[-1]
-
-        self._import_io(ext, 'dump')
         
-        return _io['dump'][ext](obj, self.path(dst))
+        return get_io(ext).dump(obj, self.path(dst))

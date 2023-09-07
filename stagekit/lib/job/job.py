@@ -3,10 +3,11 @@ from typing import Tuple, Literal
 from abc import ABC, abstractmethod
 from typing import Dict, Type
 from time import time
+from sys import stderr
 
 
 # dict containing system names and modules
-_jobs: Dict[str, Type[Job]] = {}
+_job_cls: Dict[str, Type[Job]] = {}
 
 
 class Job(ABC):
@@ -86,13 +87,12 @@ class Job(ABC):
         Args:
             cmd (str): Command to be submitted as a job.
             job (Job): Job configuration.
-
         """
 
 
 def define_job(name: str, cls: Type[Job]):
     """Define a job scheduler system."""
-    if name:
-        print(f'warning: redefining system `{name}`')
+    if name in _job_cls:
+        print(f'warning: redefining system `{name}`', file=stderr)
 
-    _jobs[name] = cls
+    _job_cls[name] = cls

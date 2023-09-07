@@ -41,7 +41,7 @@ config: Config = {
         'nnodes': 1
     },
     'modules': [
-        'stagekit.lib.system.local',
+        'stagekit.lib.job.local',
         'stagekit.lib.io.json',
         'stagekit.lib.io.toml',
         'stagekit.lib.io.pickle',

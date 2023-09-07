@@ -1,5 +1,15 @@
-import tomllib
+from .io import IO, define_io
 
-def load(src: str):
-    with open(src, 'rb') as fb:
-        return tomllib.load(fb)
+
+class Toml(IO):
+    def __init__(self):
+        from tomllib import load
+
+        self._load = load
+
+    def load(self, src: str):
+        with open(src, 'rb') as fb:
+            return self._load(fb)
+
+
+define_io('toml', Toml)

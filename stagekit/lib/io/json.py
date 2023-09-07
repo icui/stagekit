@@ -1,11 +1,21 @@
-import json
+from .io import IO, define_io
 
 
-def load(src: str):
-    with open(src, 'r') as f:
-        return json.load(f)
+class JSON(IO):
+    def __init__(self):
+        from json import load, dump
+
+        self._load = load
+        self._dump = dump
+
+    def load(self, src: str):
+        with open(src, 'r') as f:
+            return self._load(f)
 
 
-def dump(obj: dict, dst: str):
-    with open(dst, 'w') as f:
-        json.dump(obj, f)
+    def dump(self, obj: dict, dst: str):
+        with open(dst, 'w') as f:
+            self._dump(obj, f)
+
+
+define_io('json', JSON)

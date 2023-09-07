@@ -2,10 +2,12 @@ from __future__ import annotations
 from traceback import format_exc
 from sys import stderr
 import asyncio
+from importlib import import_module
 
 from .stage import Stage, current_stage
 from .context import Context
 from .runner import InsufficientWalltime
+from .config import config
 
 
 # context used by stages
@@ -18,6 +20,9 @@ async def main(stage: Stage):
     Args:
         stage (Stage): Main stage.
     """
+    for src in config['modules']:
+        import_module(src)
+
     if ctx.root.has('stagekit.pickle'):
         # restore from saved state
         s = ctx.root.load('stagekit.pickle')
