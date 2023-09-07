@@ -4,14 +4,10 @@ from os import path, fsync
 from subprocess import check_call
 from glob import glob
 from importlib import import_module
-from typing import List, Iterable, Awaitable, Any
+from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple
 
 from .wrapper import stage
 from .config import config
-
-
-# imported functions for load() and dump()
-_io = { 'load': {}, 'dump': {} }
 
 
 @stage(match={'self': lambda s: s.cwd})
@@ -93,8 +89,28 @@ class Directory:
         """
         return _call(self, cmd, cwd)
 
-    def mpiexec(self, cmd: str, nprocs: int, cpus_per_proc: int):
-        """Execute a function or shell command with MPI or multiprocessing."""
+    def mpiexec(self, cmd: str | Callable[[], Any] | Callable[[Any], Any],
+            nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0, *,
+            multiprocessing: bool = False, custom_mpiexec: str | None = None, custom_nnodes: int | Tuple[int, int] | None = None,
+            args: Collection[Any] | None = None, mpiargs: Collection[Any] | None = None,
+            check_output: Callable[..., None] | None = None, timeout: Literal['auto'] | float | None = 'auto',
+            priority: int | None = None):
+        """Execute a function or shell command with MPI or multiprocessing.
+
+        Args:
+            cmd (str | Callable[[], Any] | Callable[[Any], Any]): Command or function to execute with MPI.
+            nprocs (int, optional): Number of MPI processes. Defaults to 1.
+            cpus_per_proc (int, optional): Number of CPUs per MPI processes. Defaults to 1.
+            gpus_per_proc (int | Tuple[Literal[1], int], optional): Number of GPUs per MPI processes, use (1,n) for MPS (use one GPU for multiple MPI processes). Defaults to 0.
+            multiprocessing (bool, optional): Use multiprocessing instead of MPI. Defaults to False.
+            custom_mpiexec (str | None, optional): Custom command to call MPI tasks. Defaults to None.
+            custom_nnodes (int | Tuple[int, int] | None, optional): Specify the number of nodes if custom_mpiexec is enabled. Defaults to None.
+            args (Collection[Any] | None, optional): Arguments passed directly to task function. Defaults to None.
+            mpiargs (Collection[Any] | None, optional): Arguments that can be accessed by task function through stagekit.mpi.stat(). Defaults to None.
+            check_output (Callable[..., None] | None): Check the output of stdout and/or stderr and determine if task succeeded.
+            timeout (Literal['auto'] | float | None): Action when running out of walltime.
+            priority (int | None, optional): Priority of the job execution. Defaults to None.
+        """
 
     def rm(self, src: str = '.'):
         """Remove a file or a directory.
@@ -254,11 +270,11 @@ class Directory:
         """
         return self.read(src).split('\n')
     
-    def writelines(self, lines: Iterable[str], dst: str, mode: str = 'w', *, mkdir: bool = True):
+    def writelines(self, lines: Collection[str], dst: str, mode: str = 'w', *, mkdir: bool = True):
         """Write lines of a text file.
 
         Args:
-            lines (Iterable[str]): Lines of the text file.
+            lines (Collection[str]): Lines of the text file.
             dst (str): Relative path to the text file.
             mode (str, optional): Write mode. Defaults to 'w'.
             mkdir (bool, optional): Creates a new directory if dst does not exist. Defaults to True.
@@ -316,7 +332,6 @@ class Directory:
 
         if ext is None:
             ext = dst.split('.')[-1]
-
 
         self._import_io(ext, 'dump')
         

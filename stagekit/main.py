@@ -5,6 +5,7 @@ import asyncio
 
 from .stage import Stage, current_stage
 from .context import Context
+from .runner import InsufficientWalltime
 
 
 # context used by stages
@@ -35,7 +36,11 @@ async def main(stage: Stage):
     except Exception as e:
         print(format_exc(), file=stderr)
 
-        if current := current_stage():
+        if isinstance(e, InsufficientWalltime):
+            # TODO
+            pass
+
+        elif current := current_stage():
             current.error = e
 
     ctx._save(stage)

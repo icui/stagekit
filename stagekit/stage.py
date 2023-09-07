@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Dict, Mapping, Iterable, TYPE_CHECKING
+from typing import Any, List, Dict, Mapping, Collection, TYPE_CHECKING
 import asyncio
 
 from .task import create_task
@@ -57,7 +57,7 @@ class Stage:
     # args and kwargs are restored from a saved state
     restored = False
 
-    def __init__(self, func: StageFunc, args: Iterable[Any], kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
+    def __init__(self, func: StageFunc, args: Collection[Any], kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
         self.func = func
         self.args = list(args)
         self.kwargs = dict(kwargs)
@@ -107,6 +107,7 @@ class Stage:
         # initialize state
         self.done = False
         self.version += 1
+        self.data = {}
 
         result = self.func.func(*self.args, **self.kwargs)
 

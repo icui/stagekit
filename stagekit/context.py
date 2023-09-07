@@ -65,8 +65,8 @@ class Context(Directory):
     def __setitem__(self, key, val):
         (current_stage() or Stage).data[key] = val
 
-    def goto(self, cwd: str | None = None):
-        """Change working directory.
+    def setwd(self, cwd: str | None = None):
+        """Set working directory.
 
         Args:
             cwd (str | None): Directory path relative to the base directory of current stage.
