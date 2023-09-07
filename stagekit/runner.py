@@ -74,9 +74,9 @@ async def _loop():
 
 
 @stage(match={'check_output': None})
-async def mpiexec(cwd: str | None, cmd: str | Callable[[], Any] | Callable[[str], Any],
+async def mpiexec(cwd: str | None, cmd: str | Callable,
         nprocs: int, cpus_per_proc: int, gpus_per_proc: int | Tuple[Literal[1], int], multiprocessing: bool,
-        custom_exec: str | None, custom_nnodes: int | Tuple[int, int] | None, args: Collection[str] | None, mpiargs: Collection[Any] | None,
+        custom_exec: str | None, custom_nnodes: int | Tuple[int, int] | None, args: Collection | None, mpiargs: Collection | None,
         fname: str | None, check_output: Callable[..., None] | None, timeout: Literal['auto'] | float | None, priority: int) -> str | None:
     """Schedule the execution of MPI task."""
     global _job
@@ -90,6 +90,8 @@ async def mpiexec(cwd: str | None, cmd: str | Callable[[], Any] | Callable[[str]
         nprocs = min(len(mpiargs), nprocs)
 
     # calculate node number
+    multiprocessing = _job.no_mpi or multiprocessing
+
     if custom_exec and custom_nnodes:
         if isinstance(custom_nnodes, tuple):
             if multiprocessing:
@@ -202,7 +204,7 @@ async def mpiexec(cwd: str | None, cmd: str | Callable[[], Any] | Callable[[str]
                 mpiargs.append(_args[(nprocs - 1) * chunk:])
 
             root.rm(f'{fname}.*')
-            root.dump((cmd, args, mpiargs, cwd), f'{fname}.pickle')
+            root.dump((cmd, args, mpiargs), f'{fname}.pickle')
             cmd = f'python -m "stagekit.mpi" {fname}'
             cwd = None
 

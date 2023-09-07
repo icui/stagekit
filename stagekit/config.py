@@ -36,9 +36,7 @@ path_local = environ.get('STAGEKIT_CONFIG_LOCAL') or './config.toml'
 # default config from stagekit module
 config: Config = {
     'job': {
-        'system': 'local',
-        'name': 'stagekit',
-        'nnodes': 1
+        'job': 'local'
     },
     'modules': [
         'stagekit.lib.job.local',

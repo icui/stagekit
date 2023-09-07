@@ -22,22 +22,25 @@ class Job(ABC):
     share_gpu: bool = False
 
     # number of cpus per node
-    cpus_per_node: int
+    cpus_per_node: int = 1
 
     # number of gpus per node
-    gpus_per_node: int
+    gpus_per_node: int = 0
 
     # time interval to check status updates from other jobs (in minutes)
     status_update: int | float = 0.1
 
+    # force using multiprocessing
+    no_mpi = False
+
     # job name
-    name: str
+    name: str = 'stagekit'
 
     # time requested for the job (in minutes)
     walltime: int | float
 
     # number of nodes to request and run MPI tasks, defaults to 1
-    nnodes: int
+    nnodes: int = 1
 
     # max number of jobs to execute the workflow
     njobs: int = 1
@@ -63,13 +66,6 @@ class Job(ABC):
         return self.walltime - self.gap - (time() - self._exec_start) / 60
     
     def __init__(self, config: dict):
-        # set job attributes
-        required_keys = ['nnodes', 'walltime', 'cpus_per_node', 'gpus_per_node']
-
-        for key in required_keys:
-            if key not in config and not hasattr(self, key):
-                raise KeyError(f'required job config `{key}` is missing')
-
         for key, val in config.items():
             if key != 'job':
                 setattr(self, key, val)

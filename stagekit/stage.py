@@ -57,7 +57,7 @@ class Stage:
     # args and kwargs are restored from a saved state
     restored = False
 
-    def __init__(self, func: StageFunc, args: Collection[Any], kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
+    def __init__(self, func: StageFunc, args: Collection, kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
         self.func = func
         self.args = list(args)
         self.kwargs = dict(kwargs)

@@ -6,7 +6,6 @@ from glob import glob
 from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple
 
 from .wrapper import stage
-from .config import config
 from .lib.io.io import get_io
 
 
@@ -89,10 +88,10 @@ class Directory:
         """
         return _call(self, cmd, cwd)
 
-    def mpiexec(self, cmd: str | Callable[[], Any] | Callable[[Any], Any],
+    def mpiexec(self, cmd: str | Callable,
             nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0, *,
             multiprocessing: bool = False, custom_exec: str | None = None, custom_nnodes: int | Tuple[int, int] | None = None,
-            args: Collection[Any] | None = None, mpiargs: Collection[Any] | None = None, fname: str | None = None,
+            args: Collection | None = None, mpiargs: Collection | None = None, fname: str | None = None,
             check_output: Callable[..., None] | None = None, timeout: Literal['auto'] | float | None = 'auto',
             priority: int = 0):
         """Execute a function or shell command with MPI or multiprocessing.
