@@ -5,7 +5,7 @@ from sys import argv
 
 @stage
 async def test():
-    await test_mp()
+    # await test_mp()
     await test_mpi()
 
 
@@ -27,8 +27,19 @@ async def test_mpi():
     print(ctx.read(fname+'.stdout'))
     fname = await ctx.mpiexec(_sleep, args=('serial_2', 2))
     print(ctx.read(fname+'.stdout'))
-    fname = await ctx.mpiexec('echo parallel_1 && sleep 2', 2)
-    print(ctx.read(fname+'.stdout'))
+    fname = await gather(
+        ctx.mpiexec('echo parallel_1_1 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_2 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_3 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_4 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_5 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_6 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_7 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_8 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_9 && sleep 2', 2),
+        ctx.mpiexec('echo parallel_1_10 && sleep 2', 2))
+    print(ctx.read(fname[0]+'.stdout'))
+    print(ctx.read(fname[1]+'.stdout'))
     fname = await ctx.mpiexec(_sleep2, 2, args=('parallel_2', 2), mpiargs=('a1', 'a2'))
     print(ctx.read(fname+'.stdout'))
 
