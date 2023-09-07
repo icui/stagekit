@@ -8,6 +8,7 @@ from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple
 
 from .wrapper import stage
 from .config import config
+from .runner import mpiexec
 
 
 @stage(match={'self': lambda s: s.cwd})
@@ -91,10 +92,10 @@ class Directory:
 
     def mpiexec(self, cmd: str | Callable[[], Any] | Callable[[Any], Any],
             nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0, *,
-            multiprocessing: bool = False, custom_mpiexec: str | None = None, custom_nnodes: int | Tuple[int, int] | None = None,
-            args: Collection[Any] | None = None, mpiargs: Collection[Any] | None = None,
+            multiprocessing: bool = False, custom_exec: str | None = None, custom_nnodes: int | Tuple[int, int] | None = None,
+            args: Collection[Any] | None = None, mpiargs: Collection[Any] | None = None, fname: str | None = None,
             check_output: Callable[..., None] | None = None, timeout: Literal['auto'] | float | None = 'auto',
-            priority: int | None = None):
+            priority: int = 0):
         """Execute a function or shell command with MPI or multiprocessing.
 
         Args:
@@ -103,14 +104,19 @@ class Directory:
             cpus_per_proc (int, optional): Number of CPUs per MPI processes. Defaults to 1.
             gpus_per_proc (int | Tuple[Literal[1], int], optional): Number of GPUs per MPI processes, use (1,n) for MPS (use one GPU for multiple MPI processes). Defaults to 0.
             multiprocessing (bool, optional): Use multiprocessing instead of MPI. Defaults to False.
-            custom_mpiexec (str | None, optional): Custom command to call MPI tasks. Defaults to None.
-            custom_nnodes (int | Tuple[int, int] | None, optional): Specify the number of nodes if custom_mpiexec is enabled. Defaults to None.
+            custom_exec (str | None, optional): Custom command to call MPI tasks. Defaults to None.
+            custom_nnodes (int | Tuple[int, int] | None, optional): Specify the number of nodes if custom_exec is enabled. Defaults to None.
             args (Collection[Any] | None, optional): Arguments passed directly to task function. Defaults to None.
             mpiargs (Collection[Any] | None, optional): Arguments that can be accessed by task function through stagekit.mpi.stat(). Defaults to None.
+            fname (str | None, optional): Name of the input/output files (e.g. {fname}.log, {fname}.pickle, {fname}.out). Defaults to None.
             check_output (Callable[..., None] | None): Check the output of stdout and/or stderr and determine if task succeeded.
             timeout (Literal['auto'] | float | None): Action when running out of walltime.
             priority (int | None, optional): Priority of the job execution. Defaults to None.
         """
+        return mpiexec(self.cwd, cmd,
+            nprocs, cpus_per_proc, gpus_per_proc, multiprocessing,
+            custom_exec, custom_nnodes, args, mpiargs, fname,
+            check_output, timeout, priority)
 
     def rm(self, src: str = '.'):
         """Remove a file or a directory.

@@ -94,18 +94,14 @@ class StageFunc:
 P = ParamSpec('P')
 Q = ParamSpec('Q')
 
-# type of wrapped functions or parameters (return value of @stage)
-WrappedFunc = Callable[P, Awaitable[Any]]
-WrappedParams = Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]
-
 
 @overload
-def stage(func: Callable[P, Any]) -> WrappedFunc: ...
+def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
 
 @overload
-def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> WrappedParams: ...
+def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
 
-def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> WrappedParams | WrappedFunc:
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
     """Function wrapper that creates a stage to execute the function.
 
     Args:
@@ -113,6 +109,6 @@ def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto']
         rerun (bool | Literal['auto']): Whether or not to re-run existing stage function.
     """
     if func is None:
-        return cast(WrappedParams, lambda f: StageFunc(f, rerun, match))
+        return cast(Any, lambda f: StageFunc(f, rerun, match))
     
-    return cast(WrappedFunc, StageFunc(func, 'auto', None))
+    return cast(Any, StageFunc(func, 'auto', None))
