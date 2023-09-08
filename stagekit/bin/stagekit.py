@@ -6,6 +6,7 @@ def cli_run():
     from stagekit import ctx
     from stagekit.main import main
     from stagekit.config import config
+    from stagekit.wrapper import StageFunc
     from importlib import import_module
 
     if '-r' in argv:
@@ -20,9 +21,13 @@ def cli_run():
     else:
         src = input('Enter the main stage to run (<module_name>:<func_name>):\n')
     
-    mod, func = src.replace('/', '.').split(':')
-
-    main(getattr(import_module(mod), func))
+    try:
+        mod, func = src.replace('/', '.').split(':')
+        main(getattr(import_module(mod), func))
+    
+    except:
+        print(f'Error: invalid function path: {src}.')
+        print('Please check the path and make sure target function is wrapped by @stage.')
 
 
 def cli_help():

@@ -33,8 +33,10 @@ async def preprocess(iteration):
 async def specfem(_):
     await sleep(1)
     print(ctx.cwd, ctx['iteration'])
-    if len(argv) > 1 and int(argv[1]) == ctx['iteration']:
-        raise RuntimeError('expected error')
+
+    for i, a in enumerate(argv[:-1]):
+        if a == '-k' and int(argv[i+1]) == ctx['iteration']:
+            raise RuntimeError('expected error')
 
 
 @stage
