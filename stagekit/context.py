@@ -7,7 +7,7 @@ from sys import stderr
 
 from .stage import Stage, current_stage
 from .directory import Directory
-from .execute import STAGE_IN_SUBPROCESS
+from .subprocess import stat
 
 
 class Context(Directory):
@@ -102,7 +102,7 @@ class Context(Directory):
 
     def _save(self, stage: Stage):
         """Save a stage to stagekit.pickle."""
-        if not STAGE_IN_SUBPROCESS:
+        if not stat.in_subprocess:
             self.root.dump(stage, '_stagekit.pickle')
 
             try:

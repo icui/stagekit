@@ -15,6 +15,9 @@ class Config(TypedDict):
     # default data that can be accessed by ctx[]
     data: dict
 
+    # import path to the main function (<module_name>:<func_name>)
+    main: str
+
 
 def merge_dict(a, b):
     for key in b:
@@ -40,14 +43,15 @@ config: Config = {
         'job': 'local'
     },
     'modules': [
-        'stagekit.lib.job.local',
-        'stagekit.lib.job.slurm',
-        'stagekit.lib.io.json',
-        'stagekit.lib.io.toml',
-        'stagekit.lib.io.pickle',
-        'stagekit.lib.io.numpy'
+        'stagekit.job.local',
+        'stagekit.job.slurm',
+        'stagekit.io.json',
+        'stagekit.io.toml',
+        'stagekit.io.pickle',
+        'stagekit.io.numpy'
     ],
-    'data': {}
+    'data': {},
+    'main': 'main:main'
 }
 
 # paths to load config from, priority: local > env > global

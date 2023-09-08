@@ -5,18 +5,7 @@ from subprocess import check_call
 from glob import glob
 from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple
 
-from .wrapper import stage
-from .lib.io.io import get_io
-
-
-@stage(match={'self': lambda s: s.cwd})
-async def _call(self, cmd: str, cwd: str | None):
-    from asyncio import create_subprocess_shell
-
-    cwd = self.cwd if cwd is None else path.join(self.cwd, cwd)
-
-    process = await create_subprocess_shell(cmd, cwd=cwd)
-    await process.communicate()
+from .io.io import get_io
 
 
 class Directory:
@@ -86,7 +75,11 @@ class Directory:
             cmd (str): Shell command.
             cwd (str | None): Directory to execute the command relative to current context. Defaults to None.
         """
-        return _call(self, cmd, cwd)
+        from .wrapper import call
+
+        cwd = self.cwd if cwd is None else path.join(self.cwd, cwd)
+
+        return call(cmd, cwd)
 
     def mpiexec(self, cmd: str | Callable,
             nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0, *,
@@ -105,7 +98,7 @@ class Directory:
             custom_exec (str | None, optional): Custom command to call MPI tasks. Defaults to None.
             custom_nnodes (int | Tuple[int, int] | None, optional): Specify the number of nodes if custom_exec is enabled. Defaults to None.
             args (Collection[Any] | None, optional): Arguments passed directly to task function. Defaults to None.
-            mpiargs (Collection[Any] | None, optional): Arguments that can be accessed by task function through stagekit.mpi.stat(). Defaults to None.
+            mpiargs (Collection[Any] | None, optional): Arguments that can be accessed by task function through stagekit.subprocess.stat.mpiargs. Defaults to None.
             fname (str | None, optional): Name of the input/output files (e.g. {fname}.log, {fname}.pickle, {fname}.out). Defaults to None.
             check_output (Callable[..., None] | None): Check the output of stdout and/or stderr and determine if task succeeded.
             timeout (Literal['auto'] | float | None): Action when running out of walltime.

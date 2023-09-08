@@ -1,33 +1,16 @@
 from __future__ import annotations
-from typing import ParamSpec, Awaitable, Dict, Callable, Any, Literal, TYPE_CHECKING, cast, overload
+from typing import ParamSpec, Awaitable, Dict, Callable, Any, Literal, cast, overload
 from importlib import import_module
-import asyncio
 
 from .stage import Stage, current_stage
-from .task import Task
-
-if TYPE_CHECKING:
-    from .context import Context
+from .context import Context
 
 
 # current running context
-_ctx: Context
+ctx = Context()
 
 # type alias for StageFunc.match
 Match = Dict[str, None | Callable[[Any], Any]]
-
-
-def _task_factory(self, coro, context=None):
-    """Add a custom property to asyncio.Task to store the stage a task is created from."""
-    task = Task(coro, loop=self, context=context) # type: ignore
-
-    try:
-        task._sk_stage = asyncio.current_task()._sk_stage # type: ignore
-
-    except:
-        pass
-
-    return task
 
 
 class StageFunc:
@@ -56,23 +39,13 @@ class StageFunc:
         current = current_stage()
 
         if current is None:
-            # if root stage is None, run as root stage
-            from .main import main, ctx
+            raise RuntimeError('stage function cannot run outside a main stage, type `stagekit` in command line for help')
 
-            global _ctx
-            _ctx = ctx
+        # run as a child stage of current stage
+        stage = Stage(self, args, kwargs, ctx._chdir, current.version)
+        stage.parent = current
 
-            stage = Stage(self, args, kwargs, None, 0)
-            with asyncio.Runner() as runner:
-                loop = runner.get_loop()
-                loop.set_task_factory(_task_factory)
-                runner.run(main(stage))
-
-        else:
-            # if root stage exists, run as a child of current stage
-            stage = Stage(self, args, kwargs, _ctx._chdir, current.version)
-            stage.parent = current
-            return current.progress(stage, _ctx)
+        return current.progress(stage, ctx)
 
     def __getstate__(self):
         return {'m': self.func.__module__, 'n': self.func.__name__}
@@ -112,3 +85,11 @@ def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto']
         return cast(Any, lambda f: StageFunc(f, rerun, match))
     
     return cast(Any, StageFunc(func, 'auto', None))
+
+
+@stage
+async def call(cmd: str, cwd: str | None):
+    from asyncio import create_subprocess_shell
+
+    process = await create_subprocess_shell(cmd, cwd=cwd)
+    await process.communicate()

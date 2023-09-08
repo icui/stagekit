@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio
-from typing import Callable, Dict, Tuple, Literal, Collection, Any, TYPE_CHECKING, cast
+from typing import Callable, Dict, Tuple, Literal, Collection, cast
 from math import ceil
 from time import time
 from datetime import timedelta
@@ -12,7 +12,7 @@ from sys import stderr
 from .directory import Directory
 from .config import config
 from .wrapper import stage
-from .lib.job.job import Job, _job_cls
+from .job.job import Job, _job_cls
 
 
 class InsufficientWalltime(TimeoutError):
@@ -205,7 +205,7 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
 
             root.rm(f'{fname}.*')
             root.dump((cmd, args, mpiargs), f'{fname}.pickle')
-            cmd = f'python -m "stagekit.mpi" {fname}'
+            cmd = f'python -m "stagekit.subprocess" {fname}'
             cwd = None
 
         # wrap with parallel execution command

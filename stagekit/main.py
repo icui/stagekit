@@ -3,18 +3,32 @@ from traceback import format_exc
 from sys import stderr
 import asyncio
 from importlib import import_module
+from typing import TYPE_CHECKING
 
 from .stage import Stage, current_stage
-from .context import Context
 from .runner import InsufficientWalltime
 from .config import config
+from .wrapper import ctx
+from .task import Task
+
+if TYPE_CHECKING:
+    from .wrapper import StageFunc
 
 
-# context used by stages
-ctx = Context()
+def _task_factory(self, coro, context=None):
+    """Add a custom property to asyncio.Task to store the stage a task is created from."""
+    task = Task(coro, loop=self, context=context) # type: ignore
+
+    try:
+        task._sk_stage = asyncio.current_task()._sk_stage # type: ignore
+
+    except:
+        pass
+
+    return task
 
 
-async def main(stage: Stage):
+async def _execute(stage: Stage):
     """Execute main stage.
 
     Args:
@@ -49,3 +63,12 @@ async def main(stage: Stage):
             current.error = e
 
     ctx._save(stage)
+
+
+def main(func: StageFunc):
+    stage = Stage(func, [], {}, None, 0)
+
+    with asyncio.Runner() as runner:
+        loop = runner.get_loop()
+        loop.set_task_factory(_task_factory)
+        runner.run(_execute(stage))

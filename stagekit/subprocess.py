@@ -25,14 +25,18 @@ class Stat:
     # mpiargs for current rank
     mpiargs: Collection | None = None
 
+    # currently running in subprocess
+    in_subprocess = False
+
 
 # MPI info accessed by processes
 stat = Stat()
 
 
 def _call(size: int, idx: int):
-    from stagekit.mpi import stat
+    from stagekit.subprocess import stat
 
+    stat.in_subprocess = True
     mpidir = path.dirname(argv[1]) or '.'
 
     if size == 0:
@@ -67,6 +71,8 @@ def _call(size: int, idx: int):
 
 
 if __name__ == '__main__':
+    stat.in_subprocess = True
+
     try:
         if len(argv) > 3 and argv[2] == '-mp':
             # use multiprocessing
