@@ -1,6 +1,6 @@
 import tomllib
 from os import environ
-from typing import List, TypedDict
+from typing import List, TypedDict, NotRequired
 from os.path import expanduser
 
 
@@ -16,7 +16,7 @@ class Config(TypedDict):
     data: dict
 
     # import path to the main function (<module_name>:<func_name>)
-    main: str
+    main: NotRequired[str]
 
 
 def merge_dict(a, b):
@@ -50,8 +50,7 @@ config: Config = {
         'stagekit.io.pickle',
         'stagekit.io.numpy'
     ],
-    'data': {},
-    'main': 'main:main'
+    'data': {}
 }
 
 # paths to load config from, priority: local > env > global

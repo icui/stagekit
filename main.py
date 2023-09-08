@@ -1,1 +1,0 @@
-from tests.test_mpi import test as main

@@ -10,8 +10,18 @@ def cli_run():
 
     if '-r' in argv:
         ctx.rm('stagekit.pickle')
+    
+    if len(argv) > 2 and ':' in argv[2]:
+        src = argv[2]
+    
+    elif 'main' in config:
+        src = config['main']
+    
+    else:
+        src = input('Enter the main stage to run (<module_name>:<func_name>):\n')
+    
+    mod, func = src.replace('/', '.').split(':')
 
-    mod, func = config['main'].split(':')
     main(getattr(import_module(mod), func))
 
 
