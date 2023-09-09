@@ -38,7 +38,7 @@ PATH_GLOBAL = environ.get('STAGEKIT_CONFIG_GLOBAL') or expanduser('~/.stagekit.c
 PATH_LOCAL = environ.get('STAGEKIT_CONFIG_LOCAL') or './config.toml'
 
 # object containing execution status
-PATH_PICKLE = environ.get('STAGEKIT_CONFIG_PICKLE') or './stagekit.pickle'
+PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
 
 # default config from stagekit module
 config: Config = {

@@ -1,13 +1,14 @@
 from __future__ import annotations
 from traceback import format_exc
 from sys import stderr
+from os.path import join
 import asyncio
 from importlib import import_module
 from typing import TYPE_CHECKING
 
 from .stage import Stage, current_stage
 from .runner import InsufficientWalltime
-from .config import config, PATH_PICKLE
+from .config import config, PATH_WORKSPACE
 from .wrapper import ctx
 from .task import Task
 
@@ -36,10 +37,12 @@ async def _execute(stage: Stage):
     """
     for src in config['modules']:
         import_module(src)
+    
+    path_pkl = join(PATH_WORKSPACE, 'stagekit.pickle')
 
-    if ctx.root.has(PATH_PICKLE):
+    if ctx.root.has(path_pkl):
         # restore from saved state
-        s = ctx.root.load(PATH_PICKLE)
+        s = ctx.root.load(path_pkl)
         if s == stage:
             stage = s
 

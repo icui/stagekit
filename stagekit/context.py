@@ -8,7 +8,7 @@ from sys import stderr
 from .stage import Stage, current_stage
 from .directory import Directory
 from .subprocess import stat
-from .config import PATH_PICKLE
+from .config import PATH_WORKSPACE
 
 
 class Context(Directory):
@@ -104,17 +104,20 @@ class Context(Directory):
     def _save(self, stage: Stage):
         """Save a stage to stagekit.pickle."""
         if not stat.in_subprocess:
-            self.root.dump(stage, '_stagekit.pickle')
+            path_tmp = path.join(PATH_WORKSPACE, '_stagekit.pickle')
+            path_pkl = path.join(PATH_WORKSPACE, 'stagekit.pickle')
+
+            self.root.dump(stage, path_tmp)
 
             try:
                 # verify saved state
-                s = self.root.load('_stagekit.pickle')
+                s = self.root.load(path_tmp)
                 assert s == stage
 
             except Exception:
                 print(format_exc(), file=stderr)
 
             else:
-                self.root.mv('_stagekit.pickle', PATH_PICKLE)
+                self.root.mv(path_tmp, path_pkl)
 
             self._saving = False

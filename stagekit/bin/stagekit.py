@@ -3,14 +3,16 @@ from sys import argv
 
 
 def cli_run():
+    from importlib import import_module
+    from os.path import join
+
     from stagekit import ctx
     from stagekit.main import main
-    from stagekit.config import config, PATH_PICKLE
+    from stagekit.config import config, PATH_WORKSPACE
     from stagekit.wrapper import StageFunc
-    from importlib import import_module
 
     if '-r' in argv:
-        ctx.rm(PATH_PICKLE)
+        ctx.rm(join(PATH_WORKSPACE, 'stagekit.pickle'))
     
     if len(argv) > 2 and ':' in argv[2]:
         src = argv[2]
