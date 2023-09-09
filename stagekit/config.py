@@ -32,10 +32,13 @@ def merge_dict(a, b):
 
 
 # global configuration file
-path_global = environ.get('STAGEKIT_CONFIG_GLOBAL') or expanduser('~/.stagekit.config.toml')
+PATH_GLOBAL = environ.get('STAGEKIT_CONFIG_GLOBAL') or expanduser('~/.stagekit.config.toml')
 
 # configuration file of current workspace
-path_local = environ.get('STAGEKIT_CONFIG_LOCAL') or './config.toml'
+PATH_LOCAL = environ.get('STAGEKIT_CONFIG_LOCAL') or './config.toml'
+
+# object containing execution status
+PATH_PICKLE = environ.get('STAGEKIT_CONFIG_PICKLE') or './stagekit.pickle'
 
 # default config from stagekit module
 config: Config = {
@@ -54,7 +57,7 @@ config: Config = {
 }
 
 # paths to load config from, priority: local > env > global
-for src in path_global, path_local:
+for src in PATH_GLOBAL, PATH_LOCAL:
     try:
         with open(src, 'rb') as f:
             merge_dict(config, tomllib.load(f))

@@ -8,6 +8,7 @@ from sys import stderr
 from .stage import Stage, current_stage
 from .directory import Directory
 from .subprocess import stat
+from .config import PATH_PICKLE
 
 
 class Context(Directory):
@@ -114,6 +115,6 @@ class Context(Directory):
                 print(format_exc(), file=stderr)
 
             else:
-                self.root.mv('_stagekit.pickle', 'stagekit.pickle')
+                self.root.mv('_stagekit.pickle', PATH_PICKLE)
 
             self._saving = False

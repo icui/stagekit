@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from .stage import Stage, current_stage
 from .runner import InsufficientWalltime
-from .config import config
+from .config import config, PATH_PICKLE
 from .wrapper import ctx
 from .task import Task
 
@@ -37,9 +37,9 @@ async def _execute(stage: Stage):
     for src in config['modules']:
         import_module(src)
 
-    if ctx.root.has('stagekit.pickle'):
+    if ctx.root.has(PATH_PICKLE):
         # restore from saved state
-        s = ctx.root.load('stagekit.pickle')
+        s = ctx.root.load(PATH_PICKLE)
         if s == stage:
             stage = s
 
