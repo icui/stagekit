@@ -8,7 +8,7 @@ from sys import stderr
 from .stage import Stage, current_stage
 from .directory import Directory
 from .subprocess import stat
-from .config import PATH_WORKSPACE
+from .config import config, PATH_WORKSPACE
 
 
 class Context(Directory):
@@ -61,10 +61,15 @@ class Context(Directory):
 
             current = current.parent
 
-        return Stage.data.get(key)
+        return config['data'].get(key)
 
     def __setitem__(self, key, val):
-        (current_stage() or Stage).data[key] = val
+        current = current_stage()
+
+        if not current:
+            raise RuntimeError('cannot set properties outside a running stage')
+
+        current.data[key] = val
 
     def setwd(self, cwd: str | None = None):
         """Set working directory.
@@ -77,17 +82,9 @@ class Context(Directory):
 
         self._chdir = cwd
 
-    @property
-    def rerun(self):
-        """Stage has previously been executed, re-running because stage has rerun flag on."""
-        if stage := current_stage():
-            return stage.rerun
-        
-        return False
-
     async def checkpoint(self):
         """Save root stage to stagekit.pickle one second later."""
-        if self._saving:
+        if self._saving or stat.in_subprocess:
             return
 
         if stage := current_stage():
@@ -103,21 +100,23 @@ class Context(Directory):
 
     def _save(self, stage: Stage):
         """Save a stage to stagekit.pickle."""
-        if not stat.in_subprocess:
-            path_tmp = path.join(PATH_WORKSPACE, '_stagekit.pickle')
-            path_pkl = path.join(PATH_WORKSPACE, 'stagekit.pickle')
+        if stat.in_subprocess:
+            return
 
-            self.root.dump(stage, path_tmp)
+        path_tmp = path.join(PATH_WORKSPACE, '_stagekit.pickle')
+        path_pkl = path.join(PATH_WORKSPACE, 'stagekit.pickle')
 
-            try:
-                # verify saved state
-                s = self.root.load(path_tmp)
-                assert s == stage
+        self.root.dump(stage, path_tmp)
 
-            except Exception:
-                print(format_exc(), file=stderr)
+        try:
+            # verify saved state
+            s = self.root.load(path_tmp)
+            assert s == stage
 
-            else:
-                self.root.mv(path_tmp, path_pkl)
+        except Exception:
+            print(format_exc(), file=stderr)
 
-            self._saving = False
+        else:
+            self.root.mv(path_tmp, path_pkl)
+
+        self._saving = False

@@ -14,9 +14,8 @@ class Stage:
     """Wrapper of a function to save execution progress.
         Note: Stage is intended to be a purely internal class,
         do not create a stage directly with Stage(), use decorator @stage instead."""
-    # (both static and non-static property) data defined by stage function accessed through ctx
-    # use static property Stage.data as root of inheritance
-    data: dict = config['data']
+    # data defined by stage function accessed through ctx
+    data: dict
 
     # stage function
     func: StageFunc
