@@ -56,7 +56,11 @@ def cli_run():
         src = config['main']
     
     else:
-        src = input('Enter the main stage to run (<module_name>:<func_name>):\n')
+        try:
+            src = input('Enter the main stage to run (<module_name>:<func_name>):\n')
+        
+        except KeyboardInterrupt:
+            exit()
     
     func = None
 
@@ -114,8 +118,12 @@ def cli_config():
     print('If this is OK, press Enter to confirm.')
     print(f'If you want to change the location of the configuration file, input any character to cancel, then set environment variable `{env}`.')
 
-    if input():
-        return
+    try:
+        if input():
+            return
+    
+    except KeyboardInterrupt:
+        exit()
 
     i = select([
         'Job configuration.',
