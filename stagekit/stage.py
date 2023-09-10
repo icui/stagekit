@@ -41,9 +41,6 @@ class Stage:
     # main function successfully executed
     done = False
 
-    # re-running existing stage
-    rerun = False
-
     # error occured during execution
     error: Exception | None = None
 
@@ -145,7 +142,6 @@ class Stage:
                     s.func = stage.func
                     s.args = stage.args
                     s.kwargs = stage.kwargs
-                    s.rerun = s.done
                     s.done = False
                     s.restored = False
                     await create_task(s.execute(ctx), s)

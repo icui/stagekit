@@ -10,7 +10,7 @@ from os.path import join
 from sys import stderr
 
 from .directory import Directory
-from .config import config
+from .config import config, PATH_WORKSPACE
 from .wrapper import stage
 from .job.job import Job, _job_cls
 
@@ -166,7 +166,7 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
             else:
                 fname = 'mpiexec_' + fname
         
-        fname = join('.stagekit', fname)
+        fname = join(PATH_WORKSPACE, fname)
 
         root = Directory()
 
