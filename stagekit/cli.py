@@ -1,5 +1,35 @@
 #!/usr/bin/env python
-from sys import argv
+from sys import argv, exit
+
+
+def select(items: list, prompt: str = 'Select one of the following:'):
+    """Choose from a list of items."""
+    print(prompt)
+
+    for i, item in enumerate(items):
+        print(f'{i+1}) {item}')
+    
+    print(f'{len(items)+1}) Exit.')
+
+    while True:
+        try:
+            i = input()
+
+            if i == str(len(items) + 1):
+                raise KeyboardInterrupt()
+
+            idx = int(i) - 1
+        
+            assert idx >= 0 and idx < len(items)
+
+        except KeyboardInterrupt:
+            exit()
+        
+        except:
+            print(f'Please input a number between 1 and {len(items)+1}')
+        
+        else:
+            return i
 
 
 def cli_run():
@@ -65,59 +95,34 @@ def cli_config():
     """
     from .config import PATH_LOCAL, PATH_GLOBAL
 
-    print('Choose whether you want to change local or global configuration:')
-    print('1) Local configuration (for current workspace).')
-    print('2) Global configuration (for all workspaces of current user).')
-    print('3) Exit.')
+    i = select([
+        'Local configuration (for current workspace).',
+        'Global configuration (for all workspaces of current user).'
+    ], 'Choose whether you want to change local or global configuration:')
 
-    while True:
-        mode = input()
+    if i == 1:
+        prompt = 'current workspace'
+        path = PATH_LOCAL
+        env = 'STAGEKIT_CONFIG_LOCAL'
 
-        if mode == '1':
-            cli_config_write('current workspace', PATH_LOCAL, 'STAGEKIT_CONFIG_LOCAL')
-            break
+    else:
+        prompt = 'all workspaces of current user'
+        path = PATH_GLOBAL
+        env = 'STAGEKIT_CONFIG_GLOBAL'
 
-        elif mode == '2':
-            cli_config_write('all workspaces of current user', PATH_GLOBAL, 'STAGEKIT_CONFIG_GLOBAL')
-            break
-
-        elif mode == '3':
-            break
-
-        else:
-            print('Please input `1`, `2`, or `3`.')
-
-
-def cli_config_write(prompt: str, path: str, env: str):
     print(f'Editing configuration for {prompt}, which is `{path}`.')
     print('If this is OK, press Enter to confirm.')
-    print('If you want to change the location of the configuration file, input any character to cancel,')
-    print(f'  then set environment variable `{env}`.')
+    print(f'If you want to change the location of the configuration file, input any character to cancel, then set environment variable `{env}`.')
 
     if input():
         return
 
-    print('Select item to config:')
-    print('1) Job configuration.')
-    print('2) Modules to load before execution.')
-    print('3) Main function of the workflow to execute.')
-    print('4) Default data in `stagekit.ctx`.')
-    print('5) Exit.')
-
-    while True:
-        mode = input()
-
-        if mode == '1':
-            break
-
-        elif mode == '2':
-            break
-
-        elif mode == '3':
-            break
-
-        else:
-            print('Please input `1`, `2`, `3`, `4` or `5`.')
+    i = select([
+        'Job configuration.',
+        'Modules to load before execution.',
+        'Main function of the workflow to execute.',
+        'Data that can be accessed from `stagekit.ctx`.'
+    ])
 
 
 def cli_write():
