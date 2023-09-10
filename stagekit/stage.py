@@ -2,8 +2,7 @@ from __future__ import annotations
 from typing import Any, List, Dict, Mapping, Collection, TYPE_CHECKING
 import asyncio
 
-from .task import create_task
-from .config import config
+from .task import create_child_task
 
 if TYPE_CHECKING:
     from .wrapper import StageFunc
@@ -144,13 +143,13 @@ class Stage:
                     s.kwargs = stage.kwargs
                     s.done = False
                     s.restored = False
-                    await create_task(s.execute(ctx), s)
+                    await create_child_task(s.execute(ctx), s)
                 
                 s.parent_version = stage.parent_version
                 return s.result
 
         self.history.append(stage)
-        await create_task(stage.execute(ctx), stage)
+        await create_child_task(stage.execute(ctx), stage)
 
         return stage.result
 

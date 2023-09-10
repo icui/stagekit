@@ -10,23 +10,10 @@ from .stage import Stage, current_stage
 from .runner import InsufficientWalltime
 from .config import config, PATH_WORKSPACE
 from .wrapper import ctx
-from .task import Task
+from .task import task_factory
 
 if TYPE_CHECKING:
     from .wrapper import StageFunc
-
-
-def _task_factory(self, coro, context=None):
-    """Add a custom property to asyncio.Task to store the stage a task is created from."""
-    task = Task(coro, loop=self, context=context) # type: ignore
-
-    try:
-        task._sk_stage = asyncio.current_task()._sk_stage # type: ignore
-
-    except:
-        pass
-
-    return task
 
 
 async def _execute(stage: Stage):
@@ -73,5 +60,5 @@ def main(func: StageFunc):
 
     with asyncio.Runner() as runner:
         loop = runner.get_loop()
-        loop.set_task_factory(_task_factory)
+        loop.set_task_factory(task_factory)
         runner.run(_execute(stage))
