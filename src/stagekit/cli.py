@@ -132,6 +132,12 @@ def cli_config():
         'Data that can be accessed from `stagekit.ctx`.'
     ])
 
+    if i == 1:
+        pass
+
+    elif i == 2:
+        pass
+
 
 def cli_write():
     """Write execution command as a job script."""
