@@ -32,10 +32,10 @@ def merge_dict(a, b):
 
 
 # global configuration file
-PATH_GLOBAL = environ.get('STAGEKIT_CONFIG_GLOBAL') or expanduser('~/.stagekit.config.toml')
+PATH_GLOBAL = expanduser(environ.get('STAGEKIT_CONFIG_GLOBAL') or '~/.stagekit.config.toml')
 
 # configuration file of current workspace
-PATH_LOCAL = environ.get('STAGEKIT_CONFIG_LOCAL') or './config.toml'
+PATH_LOCAL = environ.get('STAGEKIT_CONFIG_LOCAL') or 'config.toml'
 
 # object containing execution status
 PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
