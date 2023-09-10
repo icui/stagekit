@@ -74,12 +74,14 @@ def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
 @overload
 def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
 
-def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: Match | None = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
     """Function wrapper that creates a stage to execute the function.
 
     Args:
         func (Callable): Function to create stage from.
         rerun (bool | Literal['auto']): Whether or not to re-run existing stage function.
+        match (Match | None): Dict containing custom function to determine if a parameter is the same as that from an older version.
+            Set the value of a parameter name to None if the parameter should be ignored for matching. Defaults to None
     """
     if func is None:
         return cast(Any, lambda f: StageFunc(f, rerun, match))
