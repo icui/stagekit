@@ -89,6 +89,12 @@ def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto']
 
 @stage
 async def call(cmd: str, cwd: str | None = None):
+    """Call a shell command (wrapped in a stage).
+
+    Args:
+        cmd (str): Shell command to be called.
+        cwd (str | None, optional): Working direction of the command. Defaults to None.
+    """
     from asyncio import create_subprocess_shell
 
     process = await create_subprocess_shell(cmd, cwd=cwd)
