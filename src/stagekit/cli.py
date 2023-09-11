@@ -94,6 +94,38 @@ def cli_log():
         Flags:
             -a: Expand all entries.
     """
+    import pickle
+    from os.path import join
+    from .config import PATH_WORKSPACE
+
+    with open(join(PATH_WORKSPACE, 'stagekit.pickle'), 'rb') as f:
+        stage = pickle.load(f)
+
+        print(cli_log_str(stage, 0))
+
+
+def cli_log_str(stage, indent):
+    sp = '  ' * indent
+    msg = ''
+
+    if hasattr(stage.func.func, '__name__'):
+        msg += stage.func.func.__name__ + '\n'
+    
+    else:
+        msg += '<anonymous stage>' + '\n'
+
+    children = []
+
+    for s in stage.history:
+        if s.parent_version == stage.version:
+            children.append(s)
+    
+    nidx = 1 + len(str(len(children)))
+
+    for i, s in enumerate(children):
+        msg += sp + f'{i+1})' + ' ' * (nidx - len(str(i+1))) + cli_log_str(s, indent+1)
+    
+    return msg
 
 
 def cli_config():
