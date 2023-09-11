@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .wrapper import StageFunc
 
 
-async def _execute(stage: Stage):
+async def _execute(stage: Stage | None):
     """Execute main stage.
 
     Args:
@@ -30,10 +30,13 @@ async def _execute(stage: Stage):
     if ctx.root.has(path_pkl):
         # restore from saved state
         s = ctx.root.load(path_pkl)
-        if s == stage:
+        if stage is None or s == stage:
             stage = s
 
     try:
+        if stage is None:
+            return
+
         # execute root stage
         task = asyncio.current_task()
         task._sk_stage = stage # type: ignore
@@ -52,11 +55,12 @@ async def _execute(stage: Stage):
         elif current := current_stage():
             current.error = e
 
-    ctx._save(stage)
+    if stage is not None:
+        ctx._save(stage)
 
 
-def main(func: StageFunc):
-    stage = Stage(func, [], {}, None, 0)
+def main(func: StageFunc | None):
+    stage = Stage(func, [], {}, None, 0) if func else None
 
     with asyncio.Runner() as runner:
         loop = runner.get_loop()

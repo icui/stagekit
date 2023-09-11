@@ -43,6 +43,7 @@ def cli_run():
             -P: Do not add current folder to PYTHONPATH by default.
     """
     from importlib import import_module
+    from os.path import join, exists
 
     from .main import main
     from .config import config, PATH_WORKSPACE
@@ -58,25 +59,31 @@ def cli_run():
         src = config['main']
     
     else:
-        try:
-            src = input('Enter the main stage to run (<module_name>:<func_name>):\n')
-        
-        except KeyboardInterrupt:
-            exit()
+        path_pkl = join(PATH_WORKSPACE, 'stagekit.pickle')
+
+        if not exists(path_pkl):
+            try:
+                src = input('Enter the main stage to run (<module_name>:<func_name>):\n')
+            
+            except KeyboardInterrupt:
+                exit()
+            
+        else:
+            src = None
     
     func = None
 
-    try:
-        modname, funcname = src.replace('/', '.').split(':')
-        func = getattr(import_module(modname), funcname)
-        assert isinstance(func, StageFunc)
+    if src:
+        try:
+            modname, funcname = src.replace('/', '.').split(':')
+            func = getattr(import_module(modname), funcname)
+            assert isinstance(func, StageFunc)
+        
+        except:
+            print(f'Error: invalid function path: {src}.')
+            print('Please check the path and make sure target function is wrapped by @stage.')
     
-    except:
-        print(f'Error: invalid function path: {src}.')
-        print('Please check the path and make sure target function is wrapped by @stage.')
-    
-    if func:
-        main(func)
+    main(func)
 
 
 def cli_help():
