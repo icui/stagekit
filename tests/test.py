@@ -15,7 +15,7 @@ async def inversion():
     return mf
 
 
-@stage
+@stage(name=lambda d: f'iteration_{d["iteration"]+1}')
 async def iterate(iteration: int):
     ctx.setwd('proc')
     await preprocess(iteration)

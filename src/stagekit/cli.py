@@ -101,7 +101,7 @@ def cli_log():
     with open(join(PATH_WORKSPACE, 'stagekit.pickle'), 'rb') as f:
         stage = pickle.load(f)
 
-        print(cli_log_str(stage, 0))
+        print(repr(stage))
 
 
 def cli_log_str(stage, indent):

@@ -75,6 +75,40 @@ class Stage:
 
         return False
     
+    def __repr__(self):
+        msg = ''
+
+        if self.func.name:
+            d = self.kwargs.copy()
+
+            co_varnames = self.func.func.__code__.co_varnames
+
+            for i in range(len(self.args)):
+                d[co_varnames[i]] = self.args[i]
+            
+            msg += self.func.name(d)
+
+        elif hasattr(self.func.func, '__name__'):
+            msg += self.func.func.__name__
+        
+        else:
+            msg += '<anonymous stage>'
+
+        msg += '\n'
+
+        children = []
+
+        for s in self.history:
+            if s.parent_version == self.version:
+                children.append(s)
+        
+        nidx = 1 + len(str(len(children)))
+
+        for i, s in enumerate(children):
+            msg += f'{i+1})' + ' ' * (nidx - len(str(i+1))) + repr(s).replace('\n', '\n  ')
+        
+        return msg
+    
     def match(self):
         """Transform arguments based on the `match` argument of @stage decorator."""
         args = self.args.copy()

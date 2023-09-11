@@ -27,10 +27,14 @@ class StageFunc:
     # ignore argument(s) in comparing and saving
     match: Match
 
-    def __init__(self, func: Callable, rerun: bool | Literal['auto'], match: None | Match):
+    # display name in command `stagekit log`
+    name: Callable[[dict], str] | None
+
+    def __init__(self, func: Callable, rerun: bool | Literal['auto'], match: None | Match, name: Callable[[dict], str] | None):
         self.func = func
         self.rerun = rerun
         self.match = {}
+        self.name = name
 
         if match:
             self.match.update(match)
@@ -55,6 +59,7 @@ class StageFunc:
         self.func = f.func
         self.rerun = f.rerun
         self.match = f.match
+        self.name = f.name
 
     def __eq__(self, func):
         if isinstance(func, StageFunc):
@@ -72,9 +77,9 @@ Q = ParamSpec('Q')
 def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
 
 @overload
-def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
+def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None, name: Callable[[dict], str] | None = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
 
-def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: Match | None = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: Match | None = None, name: Callable[[dict], str] | None = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
     """Function wrapper that creates a stage to execute the function.
 
     Args:
@@ -84,9 +89,9 @@ def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto']
             Set the value of a parameter name to None if the parameter should be ignored for matching. Defaults to None
     """
     if func is None:
-        return cast(Any, lambda f: StageFunc(f, rerun, match))
+        return cast(Any, lambda f: StageFunc(f, rerun, match, name))
     
-    return cast(Any, StageFunc(func, 'auto', None))
+    return cast(Any, StageFunc(func, 'auto', None, None))
 
 
 @stage
