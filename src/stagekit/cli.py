@@ -40,6 +40,7 @@ def cli_run():
 
         Flags:
             -r: Delete saved state and start a new workflow.
+            -P: Do not add current folder to PYTHONPATH by default.
     """
     from importlib import import_module
 
