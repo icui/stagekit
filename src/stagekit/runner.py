@@ -205,7 +205,7 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
 
             root.rm(f'{fname}.*')
             root.dump((cmd, args, mpiargs), f'{fname}.pickle')
-            cmd = f'python -m "stagekit.subprocess" {fname}'
+            cmd = f'python -m "stagekit.mpiexec" {fname}'
             cwd = None
 
         # wrap with parallel execution command

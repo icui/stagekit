@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Collection, TYPE_CHECKING
 import asyncio
 from os import path
 from sys import argv, stderr
@@ -7,34 +6,9 @@ from traceback import format_exc
 from functools import partial
 import pickle
 
-if TYPE_CHECKING:
-    from mpi4py.MPI import Intracomm
-
-
-class Stat:
-
-    # Index of current MPI process
-    rank: int = 0
-
-    # Total number of MPI processes
-    size: int = 0
-
-    # MPI Comm World
-    comm: Intracomm | None = None
-
-    # mpiargs for current rank
-    mpiargs: Collection | None = None
-
-    # currently running in subprocess
-    in_subprocess = False
-
-
-# MPI info accessed by processes
-stat = Stat()
-
 
 def _call(size: int, idx: int):
-    from stagekit.subprocess import stat
+    from .mpistat import stat
 
     stat.in_subprocess = True
     mpidir = path.dirname(argv[1]) or '.'
@@ -71,6 +45,8 @@ def _call(size: int, idx: int):
 
 
 if __name__ == '__main__':
+    from .mpistat import stat
+
     stat.in_subprocess = True
 
     try:

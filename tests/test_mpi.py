@@ -1,6 +1,6 @@
 from time import sleep
 from stagekit import stage, ctx, gather
-from stagekit.subprocess import stat
+from stagekit.mpistat import stat
 from sys import argv
 
 @stage

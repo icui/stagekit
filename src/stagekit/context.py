@@ -7,7 +7,7 @@ from sys import stderr
 
 from .stage import Stage, current_stage
 from .directory import Directory
-from .subprocess import stat
+from .mpistat import stat
 from .config import config, PATH_WORKSPACE
 
 

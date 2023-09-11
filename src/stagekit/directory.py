@@ -98,7 +98,7 @@ class Directory:
             custom_exec (str | None, optional): Custom command to call MPI tasks. Defaults to None.
             custom_nnodes (int | Tuple[int, int] | None, optional): Specify the number of nodes if custom_exec is enabled. Defaults to None.
             args (Collection[Any] | None, optional): Arguments passed directly to task function. Defaults to None.
-            mpiargs (Collection[Any] | None, optional): Arguments that can be accessed by task function through stagekit.subprocess.stat.mpiargs. Defaults to None.
+            mpiargs (Collection[Any] | None, optional): Arguments that can be accessed by task function through stagekit.mpistat.stat.mpiargs. Defaults to None.
             fname (str | None, optional): Name of the input/output files (e.g. {fname}.log, {fname}.pickle, {fname}.out). Defaults to None.
             check_output (Callable[..., None] | None): Check the output of stdout and/or stderr and determine if task succeeded.
             timeout (Literal['auto'] | float | None): Action when running out of walltime.
