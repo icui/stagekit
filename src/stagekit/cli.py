@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from sys import argv, exit
+from os import getcwd
+from sys import argv, path, exit
 
 
 def select(items: list, prompt: str = 'Select one of the following:'):
@@ -153,6 +154,11 @@ commands = {
 
 
 def cli():
+    cwd = getcwd()
+
+    if '-P' not in argv and cwd not in path:
+        path.append(cwd)
+
     if len(argv) > 1:
         cmd = argv[1]
 
