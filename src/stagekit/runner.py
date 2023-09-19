@@ -9,7 +9,7 @@ from inspect import signature
 from os.path import join
 from sys import stderr
 
-from .directory import Directory
+from .directory import root
 from .config import config, PATH_WORKSPACE
 from .wrapper import stage
 from .job.job import Job, _job_cls
@@ -167,8 +167,6 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
                 fname = 'mpiexec_' + fname
         
         fname = join(PATH_WORKSPACE, fname)
-
-        root = Directory()
 
         if root.has(f'{fname}.log'):
             i = 1

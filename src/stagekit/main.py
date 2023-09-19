@@ -4,30 +4,26 @@ from sys import stderr
 from os.path import join
 import asyncio
 from importlib import import_module
-from typing import overload, Literal, TYPE_CHECKING
+from typing import overload, Literal, List
 
 from .stage import Stage, current_stage
 from .runner import InsufficientWalltime
-from .config import config, PATH_WORKSPACE
+from .config import config
 from .wrapper import ctx
 from .task import task_factory
-
-if TYPE_CHECKING:
-    from .wrapper import StageFunc
+from .cache import load_cache
 
 
 async def _execute(stage: Stage | None, main: bool):
     for src in config['modules']:
         import_module(src)
-    
-    path_pkl = join(PATH_WORKSPACE, 'stagekit.pickle')
+
     output = None
 
-    if ctx.root.has(path_pkl):
-        # restore from saved state
-        s = ctx.root.load(path_pkl)
+    for s in load_cache():
         if stage is None or s == stage:
             stage = s
+            break
 
     try:
         if stage is None:
@@ -69,10 +65,7 @@ def run(stage: Stage | None, main: bool):
 
     Args:
         stage (Stage): Function to be executed (must be wrapped in @stage).
-        main (bool): Whether main event loop is the main program.
-            Determines the format of stagekit.pickle.
-            If True, which means that run is called by `stagekit run`, only this stage is saved to stagekit.pickle.
-            If False, which means that fun is called by @stage wrapper dynamically, all stages called in this way are saved to stagekit_run.pickle.
+        main (bool): Whether the event loop is the main program (called by `stagekit run`).
     """
     with asyncio.Runner() as runner:
         loop = runner.get_loop()

@@ -319,3 +319,7 @@ class Directory:
             ext = dst.split('.')[-1]
         
         return get_io(ext).dump(obj, self.path(dst))
+
+
+# reference to root directory
+root = Directory()

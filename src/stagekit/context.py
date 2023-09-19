@@ -6,16 +6,14 @@ from traceback import format_exc
 from sys import stderr
 
 from .stage import Stage, current_stage
-from .directory import Directory
+from .directory import Directory, root
 from .mpistat import stat
 from .config import config, PATH_WORKSPACE
+from .cache import load_cache
 
 
 class Context(Directory):
     """Getter of stage keyword arguments that also inherits from parent stages."""
-    # reference to root directory
-    root: Directory
-
     # root stage is being saved
     # 0: not being saved
     # 1: preparing to save
@@ -45,9 +43,6 @@ class Context(Directory):
         paths.reverse()
 
         return path.normpath(path.join(*paths))
-
-    def __init__(self):
-        self.root = Directory()
 
     def __getitem__(self, key):
         current = current_stage()
@@ -106,17 +101,28 @@ class Context(Directory):
         path_tmp = path.join(PATH_WORKSPACE, '_stagekit.pickle')
         path_pkl = path.join(PATH_WORKSPACE, 'stagekit.pickle')
 
-        self.root.dump(stage, path_tmp)
+        stages = load_cache()
+        replaced = False
+
+        for i, s in enumerate(stages):
+            if s == stage:
+                stages[i] = s
+                replaced = True
+                break
+        
+        if not replaced:
+            stages.insert(0, stage)
+
+        root.dump(stages, path_tmp)
 
         try:
             # verify saved state
-            s = self.root.load(path_tmp)
-            assert s == stage
+            assert root.load(path_tmp) == stages
 
         except Exception:
             print(format_exc(), file=stderr)
 
         else:
-            self.root.mv(path_tmp, path_pkl)
+            root.mv(path_tmp, path_pkl)
 
         self._saving = False
