@@ -45,9 +45,10 @@ def cli_run():
     from importlib import import_module
     from os.path import join, exists
 
-    from .main import main
+    from .main import run
     from .config import config, PATH_WORKSPACE
     from .wrapper import ctx, StageFunc
+    from .stage import Stage
 
     if '-r' in argv:
         ctx.rm(PATH_WORKSPACE)
@@ -83,7 +84,8 @@ def cli_run():
             print(f'Error: invalid function path: {src}.')
             print('Please check the path and make sure target function is wrapped by @stage.')
     
-    main(func)
+    stage = Stage(func, [], {}, None, 0) if func else None
+    run(stage, True)
 
 
 def cli_help():
@@ -166,18 +168,14 @@ def cli_config():
     except KeyboardInterrupt:
         exit()
 
-    i = select([
+    match select([
         'Job configuration.',
         'Modules to load before execution.',
         'Main function of the workflow to execute.',
         'Data that can be accessed from `stagekit.ctx`.'
-    ])
-
-    if i == 1:
-        pass
-
-    elif i == 2:
-        pass
+    ]):
+        case 1:pass
+        case 2: pass
 
 
 def cli_write():

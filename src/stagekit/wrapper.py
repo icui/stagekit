@@ -42,14 +42,16 @@ class StageFunc:
     def __call__(self, *args, **kwargs):
         current = current_stage()
 
-        if current is None:
-            raise RuntimeError('stage function cannot run outside a main stage, type `stagekit` in command line for help')
-
         # run as a child stage of current stage
-        stage = Stage(self, args, kwargs, ctx._chdir, current.version)
-        stage.parent = current
+        stage = Stage(self, args, kwargs, ctx._chdir, current.version if current else 0)
 
-        return current.progress(stage, ctx)
+        if current is None:
+            from .main import run
+            return run(stage, False)
+        
+        else:
+            stage.parent = current
+            return current.progress(stage, ctx)
 
     def __getstate__(self):
         return {'m': self.func.__module__, 'n': self.func.__name__}
