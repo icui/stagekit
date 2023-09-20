@@ -15,6 +15,9 @@ class Config(TypedDict):
     # default re-run behavior 
     rerun_strategy: bool | Literal['auto']
 
+    # save array larger than the threshold to a separate file ()
+    save_array_larger_than_in_mb: int | float | None
+
     # job configuration (overwrites properties job object)
     job: dict
 
@@ -46,13 +49,15 @@ PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
 # default config from stagekit module
 config: Config = {
     'rerun_strategy': False,
+    'save_array_larger_than_in_mb': None,
     'modules': [
         'stagekit.job.local',
         'stagekit.job.slurm',
         'stagekit.io.json',
         'stagekit.io.toml',
         'stagekit.io.pickle',
-        'stagekit.io.numpy'
+        'stagekit.io.numpy',
+        'stagekit.matcher.numpy'
     ],
     'job': {
         'job': 'local'

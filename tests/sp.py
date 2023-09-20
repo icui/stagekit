@@ -12,7 +12,7 @@ async def sleep_stage():
     # sleep(randint(1, 10))
 
 
-@stage(match={'x': lambda x: np.array2string(x)})
+@stage
 async def rosen(x):
     """The Rosenbrock function"""
     print('>', x)

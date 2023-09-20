@@ -3,6 +3,7 @@ from typing import Any, List, Dict, Mapping, Collection, TYPE_CHECKING
 import asyncio
 
 from .task import create_child_task
+from .matcher.matcher import _matcher_cls
 
 if TYPE_CHECKING:
     from .wrapper import StageFunc
@@ -124,12 +125,26 @@ class Stage:
             k = co_varnames[i]
             if k in match:
                 args[i] = None if match[k] is None else match[k](args[i]) # type: ignore
+            
+            else:
+                args[i] = self.find_matcher(args[i])
         
         for k in kwargs:
             if k in match:
                 kwargs[k] = None if match[k] is None else match[k](kwargs[k]) # type: ignore
+            
+            else:
+                kwargs[k] = self.find_matcher(kwargs[k])
         
         return args, kwargs
+
+    def find_matcher(self, arg):
+        """Find matcher for an argument."""
+        for test, matcher in _matcher_cls.items():
+            if test(arg):
+                return matcher(arg)
+        
+        return arg
 
     def renew(self, other: Stage):
         """Compare self with previously saved stage and update args if needs to re-run."""

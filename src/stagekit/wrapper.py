@@ -94,7 +94,7 @@ def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto']
     if func is None:
         return cast(Any, lambda f: StageFunc(f, rerun, match, name))
     
-    return cast(Any, StageFunc(func, 'auto', None, None))
+    return cast(Any, StageFunc(func, config['rerun_strategy'], None, None))
 
 
 @stage
