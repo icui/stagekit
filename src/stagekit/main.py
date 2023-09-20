@@ -19,9 +19,10 @@ async def _execute(stage: Stage | None, main: bool):
         import_module(src)
 
     output = None
+    restored = False
 
     for s in load_cache():
-        if stage is None or s == stage:
+        if stage is None or s.renew(stage):
             stage = s
             break
 
@@ -33,7 +34,12 @@ async def _execute(stage: Stage | None, main: bool):
         task = asyncio.current_task()
         task._sk_stage = stage # type: ignore
 
-        output = await stage.execute(ctx)
+        if stage.done:
+            restored = True
+            output = stage.result
+        
+        else:
+            output = await stage.execute(ctx)
 
         if main and output is not None:
             print(output)
@@ -48,7 +54,7 @@ async def _execute(stage: Stage | None, main: bool):
         elif current := current_stage():
             current.error = e
 
-    if stage is not None:
+    if stage is not None and not restored:
         ctx._save(stage)
     
     return output

@@ -72,9 +72,6 @@ class Context(Directory):
         Args:
             cwd (str | None): Directory path relative to the base directory of current stage.
         """
-        if not hasattr(self, 'root'):
-            raise RuntimeError('cannot change root directory')
-
         self._chdir = cwd
 
     async def checkpoint(self):

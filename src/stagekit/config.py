@@ -1,22 +1,25 @@
 import tomllib
 from os import environ
-from typing import List, TypedDict, NotRequired
+from typing import List, Literal, TypedDict, NotRequired
 from os.path import expanduser
 
 
 class Config(TypedDict):
     """Content of config.toml."""
-    # job configuration (overwrites properties job object)
-    job: dict
-
     # modules to import before execution
     modules: List[str]
 
-    # default data that can be accessed by ctx[]
-    data: dict
-
     # import path to the main function (<module_name>:<func_name>)
     main: NotRequired[str]
+
+    # default re-run behavior 
+    rerun_stage: bool | Literal['auto']
+
+    # job configuration (overwrites properties job object)
+    job: dict
+
+    # default data that can be accessed by ctx[]
+    data: dict
 
 
 def merge_dict(a, b):
@@ -42,9 +45,7 @@ PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
 
 # default config from stagekit module
 config: Config = {
-    'job': {
-        'job': 'local'
-    },
+    'rerun_stage': False,
     'modules': [
         'stagekit.job.local',
         'stagekit.job.slurm',
@@ -53,6 +54,9 @@ config: Config = {
         'stagekit.io.pickle',
         'stagekit.io.numpy'
     ],
+    'job': {
+        'job': 'local'
+    },
     'data': {}
 }
 

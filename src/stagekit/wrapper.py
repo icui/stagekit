@@ -4,6 +4,7 @@ from importlib import import_module
 
 from .stage import Stage, current_stage
 from .context import Context
+from .config import config
 
 
 # current running context
@@ -81,7 +82,7 @@ def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
 @overload
 def stage(*, rerun: bool | Literal['auto'] = 'auto', match: None | Match = None, name: Callable[[dict], str] | None = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
 
-def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = 'auto', match: Match | None = None, name: Callable[[dict], str] | None = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = config['rerun_stage'], match: Match | None = None, name: Callable[[dict], str] | None = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
     """Function wrapper that creates a stage to execute the function.
 
     Args:

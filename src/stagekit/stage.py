@@ -131,6 +131,24 @@ class Stage:
         
         return args, kwargs
 
+    def renew(self, other: Stage):
+        """Compare self with previously saved stage and update args if needs to re-run."""
+        if self == other:
+            if not self.done or other.func.rerun == True or (other.func.rerun == 'auto' and len(self.history) > 0):
+                # re-run existing stage if:
+                # (1) stage not completed
+                # (2) stage is set to alwarys re-run
+                # (3) stage is set to auto re-run and stage has child stage
+                self.func = other.func
+                self.args = other.args
+                self.kwargs = other.kwargs
+                self.done = False
+                self.restored = False
+            
+            return True
+        
+        return False
+
     async def execute(self, ctx: Context):
         """Execute main function."""
         # initialize state
@@ -166,17 +184,8 @@ class Stage:
             Any: Return value of stage function.
         """
         for s in self.history:
-            if s == stage:
-                if not s.done or stage.func.rerun == True or (stage.func.rerun == 'auto' and len(s.history) > 0):
-                    # re-run existing stage if:
-                    # (1) stage not completed
-                    # (2) stage is set to alwarys re-run
-                    # (3) stage is set to auto re-run and stage has child stage
-                    s.func = stage.func
-                    s.args = stage.args
-                    s.kwargs = stage.kwargs
-                    s.done = False
-                    s.restored = False
+            if s.renew(stage):
+                if not s.done:
                     await create_child_task(s.execute(ctx), s)
                 
                 s.parent_version = stage.parent_version
