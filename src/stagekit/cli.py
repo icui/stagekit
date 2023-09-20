@@ -43,15 +43,15 @@ def cli_run():
             -P: Do not add current folder to PYTHONPATH by default.
     """
     from importlib import import_module
-    from os.path import join, exists
 
     from .main import run
+    from .directory import root, ws
     from .config import config, PATH_WORKSPACE
-    from .wrapper import ctx, StageFunc
+    from .wrapper import StageFunc
     from .stage import Stage
 
     if '-r' in argv:
-        ctx.rm(PATH_WORKSPACE)
+        root.rm(PATH_WORKSPACE)
     
     if len(argv) > 2 and ':' in argv[2]:
         src = argv[2]
@@ -60,9 +60,7 @@ def cli_run():
         src = config['main']
     
     else:
-        path_pkl = join(PATH_WORKSPACE, 'stagekit.pickle')
-
-        if not exists(path_pkl):
+        if not ws.has('stagekit.pickle'):
             try:
                 src = input('Enter the main stage to run (<module_name>:<func_name>):\n')
             
@@ -104,12 +102,9 @@ def cli_log():
             -a: Expand all entries.
     """
     import pickle
-    from os.path import join
-    from .config import PATH_WORKSPACE
+    from stagekit import ws
 
-    with open(join(PATH_WORKSPACE, 'stagekit.pickle'), 'rb') as f:
-        for stage in pickle.load(f):
-            print(repr(stage))
+    print(repr(ws.load('stagekit.pickle')))
 
 
 def cli_log_str(stage, indent):

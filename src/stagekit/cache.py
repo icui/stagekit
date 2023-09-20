@@ -1,8 +1,7 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING
 from os.path import join
-from .config import PATH_WORKSPACE
-from .directory import root
+from .directory import ws
 
 
 if TYPE_CHECKING:
@@ -17,10 +16,8 @@ def load_cache() -> List[Stage]:
     global _cache
 
     if _cache is None:
-        path_pkl = join(PATH_WORKSPACE, 'stagekit.pickle')
-
-        if root.has(path_pkl):
-            _cache = root.load(path_pkl)
+        if ws.has('stagekit.pickle'):
+            _cache = ws.load('stagekit.pickle')
         
         else:
             _cache = []

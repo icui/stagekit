@@ -3,7 +3,7 @@ from typing import Any, List, Dict, Mapping, Collection, TYPE_CHECKING
 import asyncio
 
 from .task import create_child_task
-from .matcher.matcher import _matcher_cls
+from .data.data import _data_cls
 
 if TYPE_CHECKING:
     from .wrapper import StageFunc
@@ -161,9 +161,9 @@ class Stage:
         if k in match:
             return None if match[k] is None else match[k](val) # type: ignore
 
-        for test, matcher in _matcher_cls.items():
+        for test, data in _data_cls.items():
             if test(val):
-                return matcher(val)
+                return data(val)
         
         return val
 

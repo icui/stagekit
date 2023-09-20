@@ -6,11 +6,10 @@ from time import time
 from datetime import timedelta
 from fractions import Fraction
 from inspect import signature
-from os.path import join
 from sys import stderr
 
-from .directory import root
-from .config import config, PATH_WORKSPACE
+from .directory import ws
+from .config import config
 from .wrapper import stage
 from .job.job import Job, _job_cls
 
@@ -165,13 +164,11 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
 
             else:
                 fname = 'mpiexec_' + fname
-        
-        fname = join(PATH_WORKSPACE, fname)
 
-        if root.has(f'{fname}.log'):
+        if ws.has(f'{fname}.log'):
             i = 1
 
-            while root.has(f'{fname}#{i}.log'):
+            while ws.has(f'{fname}#{i}.log'):
                 i += 1
 
             fname = f'{fname}#{i}'
@@ -201,9 +198,9 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
 
                 mpiargs.append(_args[(nprocs - 1) * chunk:])
 
-            root.rm(f'{fname}.*')
-            root.dump((cmd, args, mpiargs), f'{fname}.pickle')
-            cmd = f'python -m "stagekit.mpiexec" {fname}'
+            ws.rm(f'{fname}.*')
+            ws.dump((cmd, args, mpiargs), f'{fname}.pickle')
+            cmd = f'python -m "stagekit.mpiexec" {ws.path(fname)}'
             cwd = None
 
         # wrap with parallel execution command
@@ -217,14 +214,14 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
             cmd = _job.mpiexec(cmd, nprocs, cpus_per_proc, gpus_per_proc)
 
         # write the command actually used
-        root.write(f'{cmd}\n', f'{fname}.log')
+        ws.write(f'{cmd}\n', f'{fname}.log')
         time_start = time()
 
         # timeout due to insufficient walltime
         timeout_walltime = False
 
         # create subprocess to execute task
-        with open(root.path(f'{fname}.stdout'), 'w') as f_o, open(root.path(f'{fname}.stderr'), 'w') as f_e:
+        with open(ws.path(f'{fname}.stdout'), 'w') as f_o, open(ws.path(f'{fname}.stderr'), 'w') as f_e:
             # execute in subprocess
             process = await asyncio.create_subprocess_shell(cmd, cwd=cwd, stdout=f_o, stderr=f_e)
 
@@ -258,16 +255,16 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
                 check_output()
 
             elif nargs == 1:
-                check_output(root.read(f'{fname}.stdout'))
+                check_output(ws.read(f'{fname}.stdout'))
 
             else:
-                check_output(root.read(f'{fname}.stdout'), root.read(f'{fname}.stderr'))
+                check_output(ws.read(f'{fname}.stdout'), ws.read(f'{fname}.stderr'))
 
         # write elapsed time
-        root.write(f'\nelapsed: {timedelta(seconds=int(time()-time_start))}\n', f'{fname}.log', 'a')
+        ws.write(f'\nelapsed: {timedelta(seconds=int(time()-time_start))}\n', f'{fname}.log', 'a')
 
-        if root.has(f'{fname}.error'):
-            raise RuntimeError(root.read(f'{fname}.error'))
+        if ws.has(f'{fname}.error'):
+            raise RuntimeError(ws.read(f'{fname}.error'))
 
         elif process.returncode:
             raise RuntimeError(f'{cmd}\nexit code: {process.returncode}')

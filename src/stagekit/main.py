@@ -53,7 +53,10 @@ async def _execute(stage: Stage | None, main: bool):
             current.error = e
 
     if stage is not None and not stage.restored:
+        from .data.data import save_data
+
         ctx._save(stage)
+        save_data()
     
     return output
 

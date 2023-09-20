@@ -6,6 +6,7 @@ from glob import glob
 from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple
 
 from .io.io import get_io
+from .config import PATH_WORKSPACE
 
 
 class Directory:
@@ -323,3 +324,7 @@ class Directory:
 
 # reference to root directory
 root = Directory()
+
+# reference to workspace directory
+ws = Directory()
+ws._cwd = PATH_WORKSPACE

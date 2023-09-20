@@ -1,5 +1,5 @@
 from time import sleep
-from stagekit import stage, ctx, gather
+from stagekit import stage, ctx, ws, gather
 from stagekit.mpistat import stat
 from sys import argv
 
@@ -24,9 +24,9 @@ async def test_mp():
 @stage
 async def test_mpi():
     fname = await ctx.mpiexec('echo serial_1 && sleep 2')
-    print(ctx.read(fname+'.stdout'))
+    print(ws.read(fname+'.stdout'))
     fname = await ctx.mpiexec(_sleep, args=('serial_2', 2))
-    print(ctx.read(fname+'.stdout'))
+    print(ws.read(fname+'.stdout'))
     fname = await gather(
         ctx.mpiexec('echo parallel_1_1 && sleep 2', 2),
         ctx.mpiexec('echo parallel_1_2 && sleep 2', 2),
@@ -38,10 +38,10 @@ async def test_mpi():
         ctx.mpiexec('echo parallel_1_8 && sleep 2', 2),
         ctx.mpiexec('echo parallel_1_9 && sleep 2', 2),
         ctx.mpiexec('echo parallel_1_10 && sleep 2', 2))
-    print(ctx.read(fname[0]+'.stdout'))
-    print(ctx.read(fname[1]+'.stdout'))
+    print(ws.read(fname[0]+'.stdout'))
+    print(ws.read(fname[1]+'.stdout'))
     fname = await ctx.mpiexec(_sleep2, 2, args=('parallel_2', 2), mpiargs=('a1', 'a2'))
-    print(ctx.read(fname+'.stdout'))
+    print(ws.read(fname+'.stdout'))
 
 
 def _sleep(msg, dur):

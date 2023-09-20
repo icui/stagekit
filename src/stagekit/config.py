@@ -15,8 +15,8 @@ class Config(TypedDict):
     # default re-run behavior 
     rerun_strategy: bool | Literal['auto']
 
-    # save cached arrays to a separate file when the buffer size is larger than a specific value
-    array_buffer_in_mb: int | float | None
+    # save cached data to a separate file when the buffer size is larger than a specific value (in MB)
+    data_chunk_size: int | float | None
 
     # job configuration (overwrites properties job object)
     job: dict
@@ -49,7 +49,7 @@ PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
 # default config from stagekit module
 config: Config = {
     'rerun_strategy': False,
-    'array_buffer_in_mb': None,
+    'data_chunk_size': None,
     'modules': [
         'stagekit.job.local',
         'stagekit.job.slurm',
@@ -57,7 +57,7 @@ config: Config = {
         'stagekit.io.toml',
         'stagekit.io.pickle',
         'stagekit.io.numpy',
-        'stagekit.matcher.numpy'
+        'stagekit.data.numpy'
     ],
     'job': {
         'job': 'local'

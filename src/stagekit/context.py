@@ -6,9 +6,9 @@ from traceback import format_exc
 from sys import stderr
 
 from .stage import Stage, current_stage
-from .directory import Directory, root
+from .directory import Directory, ws
 from .mpistat import stat
-from .config import config, PATH_WORKSPACE
+from .config import config
 from .cache import load_cache
 
 
@@ -95,9 +95,6 @@ class Context(Directory):
         if stat.in_subprocess:
             return
 
-        path_tmp = path.join(PATH_WORKSPACE, '_stagekit.pickle')
-        path_pkl = path.join(PATH_WORKSPACE, 'stagekit.pickle')
-
         stages = load_cache()
         replaced = False
 
@@ -110,16 +107,16 @@ class Context(Directory):
         if not replaced:
             stages.insert(0, stage)
 
-        root.dump(stages, path_tmp)
+        ws.dump(stages, '_stagekit.pickle')
 
         try:
             # verify saved state
-            assert root.load(path_tmp) == stages
+            assert ws.load('_stagekit.pickle') == stages
 
         except Exception:
             print(format_exc(), file=stderr)
 
         else:
-            root.mv(path_tmp, path_pkl)
+            ws.mv('_stagekit.pickle', 'stagekit.pickle')
 
         self._saving = False
