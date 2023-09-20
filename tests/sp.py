@@ -25,7 +25,7 @@ async def rosen(x):
 def minimization(i, x0):
     print(i, x0)
     minimize(rosen, x0, method='BFGS',
-               options={'gtol': 1e-2, 'disp': True})
+               options={'gtol': 1, 'disp': True})
 
 
 def main():

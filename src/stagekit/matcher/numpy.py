@@ -35,7 +35,8 @@ class Numpy(Matcher):
         return all(self.data == other.data)
     
     def __getstate__(self):
-        n = config['save_array_larger_than_in_mb']
+        # n = config['save_array_larger_than_in_mb']
+        n = None
 
         if not isinstance(self.data, str) and n and n < self.data.nbytes * 1024 ** 2:
             # save array as a separate file

@@ -65,16 +65,53 @@ class Stage:
     
     def __getstate__(self):
         state = self.__dict__.copy()
-        state['args'], state['kwargs'] = self.match()
+
+        if self.restored:
+            return state
+        
+        args = state['args'] = self.args.copy()
+        kwargs = state['kwargs'] = self.kwargs.copy()
+        co_varnames = self.func.func.__code__.co_varnames
+
+        for i in range(len(args)):
+            args[i] = self.flatten(co_varnames[i], args[i])
+        
+        for k in kwargs:
+            kwargs[k] = self.flatten(k, kwargs[k])
+    
         state['restored'] = True
 
         return state
 
-    def __eq__(self, stage: Stage | None):
-        if isinstance(stage, Stage):
-            return self.func == stage.func and self.cwd == stage.cwd and self.match() == stage.match()
+    def __eq__(self, other):
+        if not isinstance(other, Stage) or self.func != other.func or self.cwd != other.cwd:
+            return False
+        
+        if self.restored and other.restored:
+            return self.args == other.args and self.kwargs == other.kwargs
 
-        return False
+        if len(self.args) != len(other.args):
+            return False
+        
+        if len(self.kwargs) != len(other.kwargs):
+            return False
+
+        co_varnames = self.func.func.__code__.co_varnames
+
+        for i, (arg1, arg2) in enumerate(zip(self.args, other.args)):
+            k = co_varnames[i]
+
+            if self.flatten(k, arg1) != other.flatten(k, arg2):
+                return False
+        
+        for k in self.kwargs:
+            if k not in other.kwargs:
+                return False
+            
+            if self.flatten(k, self.kwargs[k]) != other.flatten(k, other.kwargs[k]):
+                return False
+
+        return True
     
     def __repr__(self):
         msg = ''
@@ -110,41 +147,25 @@ class Stage:
         
         return msg
     
-    def match(self):
-        """Transform arguments based on the `match` argument of @stage decorator."""
-        args = self.args.copy()
-        kwargs = self.kwargs.copy()
-
+    def flatten(self, k: str, val: Any):
+        """Flatten an argument of stage function.
+            Arguments:
+                name (str): Argument name.
+                val (Any): Argument value.
+        """
         if self.restored:
-            return args, kwargs
+            return val
 
         match = self.func.match
-        co_varnames = self.func.func.__code__.co_varnames
 
-        for i in range(len(args)):
-            k = co_varnames[i]
-            if k in match:
-                args[i] = None if match[k] is None else match[k](args[i]) # type: ignore
-            
-            else:
-                args[i] = self.find_matcher(args[i])
-        
-        for k in kwargs:
-            if k in match:
-                kwargs[k] = None if match[k] is None else match[k](kwargs[k]) # type: ignore
-            
-            else:
-                kwargs[k] = self.find_matcher(kwargs[k])
-        
-        return args, kwargs
+        if k in match:
+            return None if match[k] is None else match[k](val) # type: ignore
 
-    def find_matcher(self, arg):
-        """Find matcher for an argument."""
         for test, matcher in _matcher_cls.items():
-            if test(arg):
-                return matcher(arg)
+            if test(val):
+                return matcher(val)
         
-        return arg
+        return val
 
     def renew(self, other: Stage):
         """Compare self with previously saved stage and update args if needs to re-run."""
@@ -166,6 +187,9 @@ class Stage:
 
     async def execute(self, ctx: Context):
         """Execute main function."""
+        if self.restored:
+            raise RuntimeError('cannot re-execute a restored stage')
+
         # initialize state
         self.done = False
         self.version += 1

@@ -19,7 +19,6 @@ async def _execute(stage: Stage | None, main: bool):
         import_module(src)
 
     output = None
-    restored = False
 
     for s in load_cache():
         if stage is None or s.renew(stage):
@@ -35,7 +34,6 @@ async def _execute(stage: Stage | None, main: bool):
         task._sk_stage = stage # type: ignore
 
         if stage.done:
-            restored = True
             output = stage.result
         
         else:
@@ -54,7 +52,7 @@ async def _execute(stage: Stage | None, main: bool):
         elif current := current_stage():
             current.error = e
 
-    if stage is not None and not restored:
+    if stage is not None and not stage.restored:
         ctx._save(stage)
     
     return output

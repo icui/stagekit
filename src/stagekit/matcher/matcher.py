@@ -10,7 +10,7 @@ _matcher_cls: Dict[Callable[..., bool], Type[Matcher]] = {}
 
 
 class Matcher(ABC):
-    """Base class for mapping stage function arguments to a type that supports __eq__."""
+    """Base class for data wrapper for serialization and comparison."""
     def __init__(self, _):
         pass
 
