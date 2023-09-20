@@ -101,8 +101,12 @@ def cli_log():
         Flags:
             -a: Expand all entries.
     """
-    import pickle
+    from importlib import import_module
     from stagekit import ws
+    from stagekit.config import config
+
+    for src in config['modules']:
+        import_module(src)
 
     print(repr(ws.load('stagekit.pickle')))
 
