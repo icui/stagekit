@@ -49,7 +49,7 @@ PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
 # default config from stagekit module
 config: Config = {
     'rerun_strategy': False,
-    'data_chunk_size': None,
+    'data_chunk_size': 0.03,
     'modules': [
         'stagekit.job.local',
         'stagekit.job.slurm',

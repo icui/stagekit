@@ -55,7 +55,7 @@ class Data(ABC):
         if self.location and self.data is None:
             idx = self.location[0]
             if idx not in _data_cache or _data_size[idx] == 0:
-                _data_cache[idx] = ws.load(f'data#{idx}.pickle')
+                _data_cache[idx], _data_size[idx] = ws.load(f'data#{idx}.pickle')
             
             self.data = _data_cache[idx][self.location[1]]
 
@@ -66,8 +66,9 @@ def define_data(test: Callable[..., bool], obj: Type[Data]):
 
 
 def save_data():
+    """Save cached stage data to file."""
     idx = len(_data_cache) - 1
 
     if _data_size[idx] > 0:
-        print(f'data#{idx} saved: {_data_size[idx]/1024**2:.1f}MB')
-        ws.dump(_data_cache[idx], f'data#{idx}.pickle')
+        print(f'data#{idx} saved: {_data_size[idx]/1024**2:.2f}MB')
+        ws.dump((_data_cache[idx], _data_size[idx]), f'data#{idx}.pickle')
