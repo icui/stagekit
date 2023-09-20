@@ -13,7 +13,7 @@ class Config(TypedDict):
     main: NotRequired[str]
 
     # default re-run behavior 
-    rerun_stage: bool | Literal['auto']
+    rerun_strategy: bool | Literal['auto']
 
     # job configuration (overwrites properties job object)
     job: dict
@@ -45,7 +45,7 @@ PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
 
 # default config from stagekit module
 config: Config = {
-    'rerun_stage': False,
+    'rerun_strategy': False,
     'modules': [
         'stagekit.job.local',
         'stagekit.job.slurm',
