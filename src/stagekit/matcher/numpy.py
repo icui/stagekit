@@ -18,7 +18,7 @@ def test(arr):
 
 class Numpy(Matcher):
     """Matcher for numpy arrays."""
-    data: np.ndarray
+    data: np.ndarray | str
 
     def __init__(self, arr: np.ndarray):
         self.data = arr
@@ -27,15 +27,20 @@ class Numpy(Matcher):
         if not isinstance(other, Numpy):
             return False
 
+        if isinstance(self.data, str):
+            import numpy as np
+
+            return all(np.load(self.data) == other.data)
+
         return all(self.data == other.data)
     
     def __getstate__(self):
         n = config['save_array_larger_than_in_mb']
 
-        if n and n < self.data.nbytes * 1024 ** 2:
+        if not isinstance(self.data, str) and n and n < self.data.nbytes * 1024 ** 2:
             # save array as a separate file
             import numpy as np
-            print('********')
+
             i = 1
             while True:
                 dst = join(PATH_WORKSPACE, f'array#{i}.npy')
@@ -52,12 +57,7 @@ class Numpy(Matcher):
         return {'data': self.data}
 
     def __setstate__(self, state: dict):
-        if isinstance(state['data'], str):
-            import numpy as np
-            self.data = np.load(state['data'])
-        
-        else:
-            self.data = state['data']
+        self.data = state['data']
 
 
 define_matcher(test, Numpy)
