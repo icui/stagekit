@@ -158,10 +158,10 @@ class Stage:
         if self.flat:
             return val
 
-        mapping = self.func.mapping
+        argmap = self.func.argmap
 
-        if k in mapping:
-            return None if mapping[k] is None else mapping[k](val) # type: ignore
+        if k in argmap:
+            return None if argmap[k] is None else argmap[k](val) # type: ignore
 
         for test, data in _data_cls.items():
             if test(val):

@@ -10,7 +10,7 @@ from .config import config
 # current running context
 ctx = Context()
 
-# type alias for StageFunc.mapping
+# type alias for StageFunc.argmap
 MappingDict = Dict[str, None | Callable[[Any], Any]]
 
 
@@ -26,20 +26,20 @@ class StageFunc:
     rerun: bool | Literal['auto']
 
     # map arguments to a flat object for comparing and saving
-    mapping: MappingDict
+    argmap: MappingDict
 
     # display name in command `stagekit log`
     name: Callable[[dict], str] | None
 
     def __init__(self, func: Callable, rerun: bool | Literal['auto'],
-                 mapping: MappingDict | None, name: Callable[[dict], str] | None):
+                 argmap: MappingDict | None, name: Callable[[dict], str] | None):
         self.func = func
         self.rerun = rerun
-        self.mapping = {}
+        self.argmap = {}
         self.name = name
 
-        if mapping:
-            self.mapping.update(mapping)
+        if argmap:
+            self.argmap.update(argmap)
     
     def __call__(self, *args, **kwargs):
         current = current_stage()
@@ -62,7 +62,7 @@ class StageFunc:
         f: StageFunc = getattr(import_module(state['m']), state['n'])
         self.func = f.func
         self.rerun = f.rerun
-        self.mapping = f.mapping
+        self.argmap = f.argmap
         self.name = f.name
 
     def __eq__(self, func):
@@ -81,19 +81,19 @@ Q = ParamSpec('Q')
 def stage(func: Callable[P, Any]) -> Callable[P, Awaitable[Any]]: ...
 
 @overload
-def stage(*, rerun: bool | Literal['auto'] = 'auto', mapping: MappingDict | None = None, name: Callable[[dict], str] | None = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
+def stage(*, rerun: bool | Literal['auto'] = 'auto', argmap: MappingDict | None = None, name: Callable[[dict], str] | None = None) -> Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]: ...
 
-def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = config['rerun_strategy'], mapping: MappingDict | None = None, name: Callable[[dict], str] | None = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
+def stage(func: Callable[P, Any] | None = None, *, rerun: bool | Literal['auto'] = config['rerun_strategy'], argmap: MappingDict | None = None, name: Callable[[dict], str] | None = None) -> Callable[P, Awaitable[Any]] | Callable[[Callable[Q, Any]], Callable[Q, Awaitable[Any]]]:
     """Function wrapper that creates a stage to execute the function.
 
     Args:
         func (Callable): Function to create stage from.
         rerun (bool | Literal['auto']): Whether or not to re-run existing stage function.
-        mapping (MappingDict | None): Dict containing custom function to determine if a parameter is the same as that from an older version.
+        argmap (MappingDict | None): Dict containing custom function to determine if a parameter is the same as that from an older version.
             Set the value of a parameter name to None if the parameter should be ignored for matching. Defaults to None
     """
     if func is None:
-        return cast(Any, lambda f: StageFunc(f, rerun, mapping, name))
+        return cast(Any, lambda f: StageFunc(f, rerun, argmap, name))
     
     return cast(Any, StageFunc(func, config['rerun_strategy'], None, None))
 

@@ -72,7 +72,7 @@ async def _loop():
     _task = None
 
 
-@stage(mapping={'check_output': None})
+@stage(argmap={'check_output': None})
 async def mpiexec(cwd: str | None, cmd: str | Callable,
         nprocs: int, cpus_per_proc: int, gpus_per_proc: int | Tuple[Literal[1], int], multiprocessing: bool,
         custom_exec: str | None, custom_nnodes: int | Tuple[int, int] | None, args: Collection | None, mpiargs: Collection | None,
