@@ -158,10 +158,10 @@ class Stage:
         if self.flat:
             return val
 
-        match = self.func.match
+        mapping = self.func.mapping
 
-        if k in match:
-            return None if match[k] is None else match[k](val) # type: ignore
+        if k in mapping:
+            return None if mapping[k] is None else mapping[k](val) # type: ignore
 
         for test, data in _data_cls.items():
             if test(val):
