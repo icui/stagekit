@@ -15,6 +15,9 @@ _data_cache: Dict[int, list] = {0: []}
 # size of data cache
 _data_size: Dict[int, int] = {0: 0}
 
+# whether the latest data chunk has been updated
+_data_updated = False
+
 
 class Data(ABC):
     """Base class of data wrapper for serialization and comparison."""
@@ -33,6 +36,8 @@ class Data(ABC):
         self.data = data
     
     def __getstate__(self):
+        global _data_updated
+
         if self.location is None:
             size = self.size
             idx = len(_data_cache) - 1
@@ -48,6 +53,7 @@ class Data(ABC):
 
             _data_cache[idx].append(self.data)
             _data_size[idx] += size
+            _data_updated = True
 
         return {'location': self.location}
 
@@ -67,8 +73,11 @@ def define_data(test: Callable[..., bool], obj: Type[Data]):
 
 def save_data():
     """Save cached stage data to file."""
+    global _data_updated
+
     idx = len(_data_cache) - 1
 
-    if _data_size[idx] > 0:
+    if _data_updated:
+        _data_updated = False
         print(f'data#{idx} saved: {_data_size[idx]/1024**2:.2f}MB')
         ws.dump((_data_cache[idx], _data_size[idx]), f'data#{idx}.pickle')

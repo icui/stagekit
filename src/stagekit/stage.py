@@ -51,7 +51,8 @@ class Stage:
     parent_version: int
 
     # args and kwargs are restored from a saved state
-    restored = False
+    # a flat stage cannot be re-run unless the arguments are updated by self.renew()
+    flat = False
 
     def __init__(self, func: StageFunc, args: Collection, kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
         self.func = func
@@ -66,20 +67,21 @@ class Stage:
     def __getstate__(self):
         state = self.__dict__.copy()
 
-        if self.restored:
+        if self.flat:
             return state
         
-        args = state['args'] = self.args.copy()
-        kwargs = state['kwargs'] = self.kwargs.copy()
+        args = state['args'] = []
+        kwargs = state['kwargs'] = {}
+
         co_varnames = self.func.func.__code__.co_varnames
 
-        for i in range(len(args)):
-            args[i] = self.flatten(co_varnames[i], args[i])
+        for i, a in enumerate(self.args):
+            args.append(self.flatten(co_varnames[i], a))
         
-        for k in kwargs:
-            kwargs[k] = self.flatten(k, kwargs[k])
+        for k, a in self.kwargs.items():
+            kwargs[k] = self.flatten(k, a)
     
-        state['restored'] = True
+        state['flat'] = True
 
         return state
 
@@ -87,7 +89,7 @@ class Stage:
         if not isinstance(other, Stage) or self.func != other.func or self.cwd != other.cwd:
             return False
         
-        if self.restored and other.restored:
+        if self.flat and other.flat:
             return self.args == other.args and self.kwargs == other.kwargs
 
         if len(self.args) != len(other.args):
@@ -153,7 +155,7 @@ class Stage:
                 name (str): Argument name.
                 val (Any): Argument value.
         """
-        if self.restored:
+        if self.flat:
             return val
 
         match = self.func.match
@@ -168,7 +170,7 @@ class Stage:
         return val
 
     def renew(self, other: Stage):
-        """Compare self with previously saved stage and update args if needs to re-run."""
+        """Compare self (previously saved stage) with a new stage and update args if needs to re-run."""
         if self == other:
             if not self.done or other.func.rerun == True or (other.func.rerun == 'auto' and len(self.history) > 0):
                 # re-run existing stage if:
@@ -179,7 +181,7 @@ class Stage:
                 self.args = other.args
                 self.kwargs = other.kwargs
                 self.done = False
-                self.restored = False
+                self.flat = False
             
             return True
         
@@ -187,7 +189,7 @@ class Stage:
 
     async def execute(self, ctx: Context):
         """Execute main function."""
-        if self.restored:
+        if self.flat:
             raise RuntimeError('cannot re-execute a restored stage')
 
         # initialize state
