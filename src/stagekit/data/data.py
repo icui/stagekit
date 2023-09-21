@@ -22,10 +22,22 @@ _data_updated = False
 class Data(ABC):
     """Base class of data wrapper for serialization and comparison."""
     # raw data object
-    data: Any = None
+    _data: Any = None
 
     # index of the data in _data_cache
     location: Tuple[int, int] | None = None
+
+    @property
+    def data(self) -> Any:
+        """Data accessor (load from file if necessary)."""
+        if self.location and self._data is None:
+            idx = self.location[0]
+            if idx not in _data_cache or _data_size[idx] == 0:
+                _data_cache[idx], _data_size[idx] = ws.load(f'data#{idx}.pickle')
+            
+            self._data = _data_cache[idx][self.location[1]]
+        
+        return self._data
 
     @property
     @abstractmethod
@@ -33,7 +45,7 @@ class Data(ABC):
         """Size of the raw data object."""
 
     def __init__(self, data):
-        self.data = data
+        self._data = data
     
     def __getstate__(self):
         global _data_updated
@@ -56,14 +68,6 @@ class Data(ABC):
             _data_updated = True
 
         return {'location': self.location}
-
-    def load(self):
-        if self.location and self.data is None:
-            idx = self.location[0]
-            if idx not in _data_cache or _data_size[idx] == 0:
-                _data_cache[idx], _data_size[idx] = ws.load(f'data#{idx}.pickle')
-            
-            self.data = _data_cache[idx][self.location[1]]
 
 
 def define_data(test: Callable[..., bool], obj: Type[Data]):

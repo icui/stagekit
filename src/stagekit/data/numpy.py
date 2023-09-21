@@ -26,9 +26,6 @@ class Numpy(Data):
     def __eq__(self, other: Numpy):
         if not isinstance(other, Numpy):
             return False
-        
-        self.load()
-        other.load()
 
         return all(self.data == other.data)
 

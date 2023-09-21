@@ -161,7 +161,10 @@ class Stage:
         argmap = self.func.argmap
 
         if k in argmap:
-            return None if argmap[k] is None else argmap[k](val) # type: ignore
+            if argmap[k] is None:
+                return None
+
+            return argmap[k](val) # type: ignore
 
         for test, data in _data_cls.items():
             if test(val):
