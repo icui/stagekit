@@ -190,11 +190,6 @@ commands = {
 
 
 def cli():
-    cwd = getcwd()
-
-    if '-P' not in argv and cwd not in path:
-        path.append(cwd)
-
     if len(argv) > 1:
         cmd = argv[1]
 

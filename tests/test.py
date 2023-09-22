@@ -53,3 +53,7 @@ async def preproc_async2():
     print('meshfem')
     await sleep(0.5)
     print(ctx.cwd, 'meshfem', ctx['task'])
+
+
+if __name__ == '__main__':
+    inversion()

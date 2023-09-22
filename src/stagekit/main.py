@@ -21,7 +21,13 @@ async def _execute(stage: Stage | None, main: bool):
     output = None
 
     for s in load_cache():
-        if stage is None or s.renew(stage):
+        if stage is None:
+            if len(s.args) == 0 and len(s.kwargs) == 0:
+                stage = s
+                stage.flat = False
+                break
+
+        elif s.renew(stage):
             stage = s
             break
 

@@ -33,3 +33,7 @@ def main():
 
     for i in range(1):
         minimization(i, x0)
+
+
+if __name__ == '__main__':
+    main()

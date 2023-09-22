@@ -51,3 +51,7 @@ def _sleep(msg, dur):
 def _sleep2(msg, dur):
     print(msg, stat.rank, stat.size, stat.mpiargs)
     sleep(dur)
+
+
+if __name__ == '__main__':
+    test()
