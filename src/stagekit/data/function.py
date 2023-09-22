@@ -40,7 +40,15 @@ class Function:
 
         self.name = func.__name__
         self.path = _cwd
-    
+
+    def __getstate__(self) -> object:
+        return {'m': self.module, 'n': self.name, 'p': self.path}
+
+    def __setstate__(self, state):
+        self.module = state['m']
+        self.name = state['n']
+        self.path = state['p']
+
     def __eq__(self, other):
         if isinstance(other, Function):
             return self.module == other.module and self.name == other.name

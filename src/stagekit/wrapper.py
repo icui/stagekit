@@ -20,6 +20,9 @@ class StageFunc:
     # function decorated by @stage
     func: Callable
 
+    # function wrapper from restored state
+    wrapper: Function | None = None
+
     # whether or not to re-run existing stage when called
     # True: always re-run
     # False: never re-run
@@ -57,7 +60,7 @@ class StageFunc:
             return current.progress(stage, ctx)
 
     def __getstate__(self):
-        return {'f': Function(self.func)}
+        return {'f': self.wrapper or Function(self.func)}
 
     def __setstate__(self, state: dict):
         f: StageFunc = state['f'].load()
@@ -66,6 +69,7 @@ class StageFunc:
         self.rerun = f.rerun
         self.argmap = f.argmap
         self.name = f.name
+        self.wrapper = state['f']
 
     def __eq__(self, func):
         if isinstance(func, StageFunc):
