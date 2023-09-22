@@ -150,9 +150,9 @@ class Stage:
         return msg
     
     def flatten(self, k: str, val: Any):
-        """Flatten an argument of stage function.
+        """Flatten an argument of stage function based on argmap parameter or data wrapper.
             Arguments:
-                name (str): Argument name.
+                k (str): Argument name.
                 val (Any): Argument value.
         """
         if self.flat:
