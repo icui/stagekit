@@ -1,14 +1,11 @@
 from __future__ import annotations
 from typing import ParamSpec, Awaitable, Dict, Callable, Any, Literal, cast, overload
-from importlib import import_module
-from os.path import dirname
-from os import getcwd
-from sys import path
 import __main__
 
 from .stage import Stage, current_stage
 from .context import Context
 from .config import config
+from .data.function import Function
 
 
 # current running context
@@ -16,13 +13,6 @@ ctx = Context()
 
 # type alias for StageFunc.argmap
 ArgMap = Dict[str, None | Callable[[Any], Any]]
-
-# directory of __main__
-if hasattr(__main__, '__file__'):
-    _cwd = dirname(__main__.__file__)
-
-else:
-    _cwd = getcwd()
 
 
 class StageFunc:
@@ -67,18 +57,10 @@ class StageFunc:
             return current.progress(stage, ctx)
 
     def __getstate__(self):
-        if self.func.__module__ == '__main__':
-            from os.path import basename, splitext
-
-            return {'m': splitext(basename(__main__.__file__))[0], 'n': self.func.__name__, 'p': _cwd}
-
-        return {'m': self.func.__module__, 'n': self.func.__name__, 'p': _cwd}
+        return {'f': Function(self.func)}
 
     def __setstate__(self, state: dict):
-        if state['p'] not in path:
-            path.insert(1, state['p'])
-
-        f: StageFunc = getattr(import_module(state['m']), state['n'])
+        f: StageFunc = state['f'].load()
 
         self.func = f.func
         self.rerun = f.rerun

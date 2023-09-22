@@ -14,9 +14,14 @@ from .task import task_factory
 from .cache import load_cache
 
 
-async def _execute(stage: Stage | None, main: bool):
+def load_modules():
+    """Load required in modules defined in config['modules']."""
     for src in config['modules']:
         import_module(src)
+
+
+async def _execute(stage: Stage | None, main: bool):
+    load_modules()
 
     output = None
 

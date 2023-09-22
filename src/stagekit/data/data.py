@@ -40,9 +40,9 @@ class Data(ABC):
         return self._data
 
     @property
-    @abstractmethod
     def size(self) -> int:
         """Size of the raw data object."""
+        return 0
 
     def __init__(self, data):
         self._data = data
@@ -70,7 +70,7 @@ class Data(ABC):
         return {'location': self.location}
 
 
-def define_data(test: Callable[..., bool], obj: Type[Data]):
+def define_data(test: Callable[..., bool], obj: Type):
     """Define a data wrapper."""
     _data_cls[test] = obj
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio
-from os import path
+from os.path import dirname
 from sys import argv, stderr
 from traceback import format_exc
 from functools import partial
@@ -11,7 +11,7 @@ def _call(size: int, idx: int):
     from .mpistat import stat
 
     stat.in_subprocess = True
-    mpidir = path.dirname(argv[1]) or '.'
+    mpidir = dirname(argv[1]) or '.'
 
     if size == 0:
         # use mpi
@@ -29,6 +29,9 @@ def _call(size: int, idx: int):
     # saved function and arguments from main process
     with open(f'{argv[1]}.pickle', 'rb') as f:
         func, args, mpiargs = pickle.load(f)
+
+        if hasattr(func, 'load'):
+            func = func.load()
     
 
     # call target function

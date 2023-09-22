@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-from os import getcwd
-from sys import argv, path, exit
+from sys import argv, exit
 
 
 def select(items: list, prompt: str = 'Select one of the following:'):

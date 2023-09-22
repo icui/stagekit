@@ -7,11 +7,13 @@ from datetime import timedelta
 from fractions import Fraction
 from inspect import signature
 from sys import stderr
+from os.path import basename, splitext
 
 from .directory import ws
 from .config import config
 from .wrapper import stage
 from .job.job import Job, _job_cls
+from .data.function import Function
 
 
 class InsufficientWalltime(TimeoutError):
@@ -199,6 +201,10 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
                 mpiargs.append(_args[(nprocs - 1) * chunk:])
 
             ws.rm(f'{fname}.*')
+
+            if callable(cmd):
+                cmd = Function(cmd) # type: ignore
+
             ws.dump((cmd, args, mpiargs), f'{fname}.pickle')
             cmd = f'python -m "stagekit.mpiexec" {ws.path(fname)}'
             cwd = None
