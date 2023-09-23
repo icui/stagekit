@@ -57,7 +57,8 @@ config: Config = {
         'stagekit.io.toml',
         'stagekit.io.pickle',
         'stagekit.io.numpy',
-        'stagekit.data.numpy'
+        'stagekit.data.numpy',
+        'stagekit.data.function'
     ],
     'job': {
         'job': 'local'

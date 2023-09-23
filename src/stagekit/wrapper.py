@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import ParamSpec, Awaitable, Dict, Callable, Any, Literal, cast, overload
-import __main__
 
 from .stage import Stage, current_stage
 from .context import Context
@@ -19,9 +18,6 @@ class StageFunc:
     """Custom serializer for function decorated by @stage to avoid pickle error."""
     # function decorated by @stage
     func: Callable
-
-    # function wrapper from restored state
-    wrapper: Function | None = None
 
     # whether or not to re-run existing stage when called
     # True: always re-run
@@ -60,7 +56,7 @@ class StageFunc:
             return current.progress(stage, ctx)
 
     def __getstate__(self):
-        return {'f': self.wrapper or Function(self.func)}
+        return {'f': Function(self.func)}
 
     def __setstate__(self, state: dict):
         f: StageFunc = state['f'].load()
@@ -69,7 +65,6 @@ class StageFunc:
         self.rerun = f.rerun
         self.argmap = f.argmap
         self.name = f.name
-        self.wrapper = state['f']
 
     def __eq__(self, func):
         if isinstance(func, StageFunc):

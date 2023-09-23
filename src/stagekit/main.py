@@ -1,10 +1,9 @@
 from __future__ import annotations
 from traceback import format_exc
 from sys import stderr
-from os.path import join
 import asyncio
 from importlib import import_module
-from typing import overload, Literal, List
+from typing import overload, Literal
 
 from .stage import Stage, current_stage
 from .runner import InsufficientWalltime
@@ -14,14 +13,8 @@ from .task import task_factory
 from .cache import load_cache
 
 
-def load_modules():
-    """Load required in modules defined in config['modules']."""
-    for src in config['modules']:
-        import_module(src)
-
-
 async def _execute(stage: Stage | None, main: bool):
-    load_modules()
+    ctx._chdir = None
 
     output = None
 

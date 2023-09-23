@@ -1,23 +1,17 @@
 from __future__ import annotations
 from os.path import dirname, basename, splitext
-from os import getcwd
-from sys import path
 from importlib import import_module
 import __main__
 
 from .data import define_data
 
 
-# directory of __main__
-if hasattr(__main__, '__file__'):
-    _cwd = dirname(__main__.__file__)
-
-else:
-    _cwd = getcwd()
-
-
 def test(func):
     return callable(func) and hasattr(func, '__module__') and hasattr(func, '__name__')
+
+
+# extra paths to be imported for functions
+inserted_paths = []
 
 
 class Function:
@@ -28,26 +22,29 @@ class Function:
     # function name
     name: str
 
-    # path required to import the function
-    path: str
-
     def __init__(self, func):
+        self.name = func.__name__
+
         if func.__module__ == '__main__':
             self.module = splitext(basename(__main__.__file__))[0]
+
+            if hasattr(__main__, '__file__'):
+                src = dirname(__main__.__file__)
+
+                if src not in inserted_paths:
+                    from stagekit import ws
+                    inserted_paths.append(src)
+                    ws.dump(inserted_paths, 'paths.json')
         
         else:
             self.module = func.__module__
 
-        self.name = func.__name__
-        self.path = _cwd
-
     def __getstate__(self) -> object:
-        return {'m': self.module, 'n': self.name, 'p': self.path}
+        return {'m': self.module, 'n': self.name}
 
     def __setstate__(self, state):
         self.module = state['m']
         self.name = state['n']
-        self.path = state['p']
 
     def __eq__(self, other):
         if isinstance(other, Function):
@@ -56,9 +53,6 @@ class Function:
         return False
     
     def load(self):
-        if self.path not in path:
-            path.insert(1, self.path)
-
         return getattr(import_module(self.module), self.name)
 
 

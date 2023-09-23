@@ -100,14 +100,9 @@ def cli_log():
         Flags:
             -a: Expand all entries.
     """
-    from importlib import import_module
-    from stagekit import ws
-    from stagekit.config import config
+    from stagekit.cache import load_cache
 
-    for src in config['modules']:
-        import_module(src)
-
-    print(repr(ws.load('stagekit.pickle')))
+    print(repr(load_cache()))
 
 
 def cli_log_str(stage, indent):

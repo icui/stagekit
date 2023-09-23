@@ -200,6 +200,10 @@ class Stage:
         self.version += 1
         self.data = {}
 
+        chdir = ctx._chdir
+        ctx._chdir = None
+
+        # main function
         result = self.func.func(*self.args, **self.kwargs)
 
         if asyncio.iscoroutine(result):
@@ -213,6 +217,8 @@ class Stage:
         # save execution state
         self.done = True
         asyncio.create_task(ctx.checkpoint())
+
+        ctx._chdir = chdir
 
         return result
 
