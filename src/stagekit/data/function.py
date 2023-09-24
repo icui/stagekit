@@ -11,7 +11,7 @@ def test(func):
 
 
 # extra paths to be imported for functions
-inserted_paths = []
+inserted_paths = {}
 
 
 class Function:
@@ -22,6 +22,9 @@ class Function:
     # function name
     name: str
 
+    # extra import path required
+    path: str | None = None
+
     def __init__(self, func):
         self.name = func.__name__
 
@@ -29,30 +32,27 @@ class Function:
             self.module = splitext(basename(__main__.__file__))[0]
 
             if hasattr(__main__, '__file__'):
-                src = dirname(__main__.__file__)
-
-                if src not in inserted_paths:
-                    from stagekit import ws
-                    inserted_paths.append(src)
-                    ws.dump(inserted_paths, 'paths.json')
+                self.path = dirname(__main__.__file__)
         
         else:
             self.module = func.__module__
 
-    def __getstate__(self) -> object:
-        return {'m': self.module, 'n': self.name}
-
-    def __setstate__(self, state):
-        self.module = state['m']
-        self.name = state['n']
+            if self.module in inserted_paths:
+                self.path = inserted_paths[self.module]
 
     def __eq__(self, other):
         if isinstance(other, Function):
-            return self.module == other.module and self.name == other.name
+            return self.module == other.module and self.name == other.name and self.path == other.path
         
         return False
     
     def load(self):
+        from sys import path
+
+        if self.path and self.path not in path:
+            path.insert(1, self.path)
+            inserted_paths[self.module] = self.path
+
         return getattr(import_module(self.module), self.name)
 
 

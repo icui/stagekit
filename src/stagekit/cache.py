@@ -4,7 +4,6 @@ from sys import path
 from importlib import import_module
 
 from .directory import ws
-from .data.function import inserted_paths
 from .config import config
 
 
@@ -24,22 +23,6 @@ def load_cache() -> List[Stage]:
 
     if _cache is None:
         if ws.has('stagekit.pickle'):
-            inserted = False
-
-            if ws.has('paths.json'):
-                paths = ws.load('paths.json')
-
-                for src in paths:
-                    if src not in inserted_paths:
-                        inserted_paths.append(src)
-
-                        if src not in path:
-                            path.insert(1, src)
-                            inserted = True
-
-            if inserted:
-                ws.dump(inserted_paths, 'paths.json')
-
             _cache = ws.load('stagekit.pickle')
         
         else:

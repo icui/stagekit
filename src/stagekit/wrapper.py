@@ -55,23 +55,6 @@ class StageFunc:
             stage.parent = current
             return current.progress(stage, ctx)
 
-    def __getstate__(self):
-        return {'f': Function(self.func)}
-
-    def __setstate__(self, state: dict):
-        f: StageFunc = state['f'].load()
-
-        self.func = f.func
-        self.rerun = f.rerun
-        self.argmap = f.argmap
-        self.name = f.name
-
-    def __eq__(self, func):
-        if isinstance(func, StageFunc):
-            return self.__getstate__() == func.__getstate__()
-
-        return False
-
 
 # type of the decorated function's arguments
 P = ParamSpec('P')

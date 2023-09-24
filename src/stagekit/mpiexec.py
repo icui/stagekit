@@ -26,17 +26,6 @@ def _call(size: int, idx: int):
         stat.rank = idx
         stat.size = size
 
-    # load paths
-    src = join(argv[1], 'paths.json')
-
-    if exists(src):
-        with open(src, 'r') as f:
-            inserted_paths = json.load(f)
-
-        for src in inserted_paths:
-            if src not in path:
-                path.insert(1, src)
-
     # saved function and arguments from main process
     with open(f'{join(argv[1], argv[2])}.pickle', 'rb') as f:
         func, args, mpiargs = pickle.load(f)

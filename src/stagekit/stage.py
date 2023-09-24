@@ -4,6 +4,7 @@ import asyncio
 
 from .task import create_child_task
 from .data.data import _data_cls
+from .data.function import Function
 
 if TYPE_CHECKING:
     from .wrapper import StageFunc
@@ -82,11 +83,19 @@ class Stage:
             kwargs[k] = self.flatten(k, a)
     
         state['flat'] = True
+        state['func'] = Function(self.func.func)
 
         return state
 
     def __eq__(self, other):
-        if not isinstance(other, Stage) or self.func != other.func or self.cwd != other.cwd:
+        def tofunc(f):
+            """Convert StageFunc to Function."""
+            if not isinstance(f, Function):
+                return Function(f.func)
+
+            return f
+
+        if not isinstance(other, Stage) or tofunc(self.func) != tofunc(other.func) or self.cwd != other.cwd:
             return False
         
         if self.flat and other.flat:
@@ -98,7 +107,11 @@ class Stage:
         if len(self.kwargs) != len(other.kwargs):
             return False
 
-        co_varnames = self.func.func.__code__.co_varnames
+        if self.flat:
+            co_varnames = other.func.func.__code__.co_varnames
+        
+        else:
+            co_varnames = self.func.func.__code__.co_varnames
 
         for i, (arg1, arg2) in enumerate(zip(self.args, other.args)):
             k = co_varnames[i]
@@ -118,18 +131,20 @@ class Stage:
     def __repr__(self):
         msg = ''
 
-        if self.func.name:
+        func = self.func.load() if self.flat else self.func # type: ignore
+
+        if func.name:
             d = self.kwargs.copy()
 
-            co_varnames = self.func.func.__code__.co_varnames
+            co_varnames = func.func.__code__.co_varnames
 
             for i in range(len(self.args)):
                 d[co_varnames[i]] = self.args[i]
             
-            msg += self.func.name(d)
+            msg += func.name(d)
 
-        elif hasattr(self.func.func, '__name__'):
-            msg += self.func.func.__name__
+        elif hasattr(func.func, '__name__'):
+            msg += func.func.__name__
         
         else:
             msg += '<anonymous stage>'
@@ -174,6 +189,9 @@ class Stage:
 
     def renew(self, other: Stage):
         """Compare self (previously saved stage) with a new stage and update args if needs to re-run."""
+        if other.flat:
+            return False
+
         if self == other:
             if not self.done or other.func.rerun == True or (other.func.rerun == 'auto' and len(self.history) > 0):
                 # re-run existing stage if:

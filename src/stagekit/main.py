@@ -22,6 +22,7 @@ async def _execute(stage: Stage | None, main: bool):
         if stage is None:
             if len(s.args) == 0 and len(s.kwargs) == 0:
                 stage = s
+                stage.func = stage.func.load() # type: ignore
                 stage.flat = False
                 break
 
