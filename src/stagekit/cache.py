@@ -24,16 +24,21 @@ def load_cache() -> List[Stage]:
 
     if _cache is None:
         if ws.has('stagekit.pickle'):
-            paths = ws.load('paths.json')
+            inserted = False
 
-            for src in paths:
-                if src not in inserted_paths:
-                    inserted_paths.append(src)
+            if ws.has('paths.json'):
+                paths = ws.load('paths.json')
 
-                    if src not in path:
-                        path.insert(1, src)
-                    
-                    ws.dump(inserted_paths, 'paths.json')
+                for src in paths:
+                    if src not in inserted_paths:
+                        inserted_paths.append(src)
+
+                        if src not in path:
+                            path.insert(1, src)
+                            inserted = True
+
+            if inserted:
+                ws.dump(inserted_paths, 'paths.json')
 
             _cache = ws.load('stagekit.pickle')
         
