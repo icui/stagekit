@@ -4,7 +4,6 @@ from typing import ParamSpec, Awaitable, Dict, Callable, Any, Literal, cast, ove
 from .stage import Stage, current_stage
 from .context import Context
 from .config import config
-from .data.function import Function
 
 
 # current running context

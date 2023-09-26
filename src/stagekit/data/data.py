@@ -1,8 +1,8 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Type, Dict, Callable, Any, Tuple
 
-from stagekit.directory import root, ws
+from stagekit.directory import ws
 from stagekit.config import config
 
 

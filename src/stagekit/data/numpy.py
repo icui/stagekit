@@ -1,9 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple
-from os.path import join
+from typing import TYPE_CHECKING
 
 from .data import define_data, Data
-from stagekit import root
 
 if TYPE_CHECKING:
     import numpy as np

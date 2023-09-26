@@ -1,4 +1,5 @@
 from __future__ import annotations
+from sys import path
 from os.path import dirname, basename, splitext
 from importlib import import_module
 import __main__
@@ -40,15 +41,13 @@ class Function:
             if self.module in inserted_paths:
                 self.path = inserted_paths[self.module]
 
-    def __eq__(self, other):
+    def __eq__(self, other): 
         if isinstance(other, Function):
             return self.module == other.module and self.name == other.name and self.path == other.path
         
         return False
     
     def load(self):
-        from sys import path
-
         if self.path and self.path not in path:
             path.insert(1, self.path)
             inserted_paths[self.module] = self.path

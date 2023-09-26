@@ -70,6 +70,9 @@ class Stage:
 
         if self.flat:
             return state
+    
+        state['flat'] = True
+        state['func'] = self.flatfunc()
         
         args = state['args'] = []
         kwargs = state['kwargs'] = {}
@@ -77,53 +80,37 @@ class Stage:
         co_varnames = self.func.func.__code__.co_varnames
 
         for i, a in enumerate(self.args):
-            args.append(self.flatten(co_varnames[i], a))
+            args.append(self.flatarg(co_varnames[i], a))
         
         for k, a in self.kwargs.items():
-            kwargs[k] = self.flatten(k, a)
-    
-        state['flat'] = True
-        state['func'] = Function(self.func.func)
+            kwargs[k] = self.flatarg(k, a)
 
         return state
 
     def __eq__(self, other):
-        def tofunc(f):
-            """Convert StageFunc to Function."""
-            if not isinstance(f, Function):
-                return Function(f.func)
-
-            return f
-
-        if not isinstance(other, Stage) or tofunc(self.func) != tofunc(other.func) or self.cwd != other.cwd:
+        if not isinstance(other, Stage) or self.flatfunc() != other.flatfunc() or self.cwd != other.cwd:
             return False
         
         if self.flat and other.flat:
             return self.args == other.args and self.kwargs == other.kwargs
 
-        if len(self.args) != len(other.args):
-            return False
-        
-        if len(self.kwargs) != len(other.kwargs):
+        if len(self.args) != len(other.args) or len(self.kwargs) != len(other.kwargs):
             return False
 
-        if self.flat:
-            co_varnames = other.func.func.__code__.co_varnames
-        
-        else:
-            co_varnames = self.func.func.__code__.co_varnames
+        # get variable names from the non-flat Stage object
+        co_varnames = (other if self.flat else self).func.func.__code__.co_varnames
 
         for i, (arg1, arg2) in enumerate(zip(self.args, other.args)):
             k = co_varnames[i]
 
-            if self.flatten(k, arg1) != other.flatten(k, arg2):
+            if self.flatarg(k, arg1) != other.flatarg(k, arg2):
                 return False
         
         for k in self.kwargs:
             if k not in other.kwargs:
                 return False
             
-            if self.flatten(k, self.kwargs[k]) != other.flatten(k, other.kwargs[k]):
+            if self.flatarg(k, self.kwargs[k]) != other.flatarg(k, other.kwargs[k]):
                 return False
 
         return True
@@ -164,7 +151,14 @@ class Stage:
         
         return msg
     
-    def flatten(self, k: str, val: Any):
+    def flatfunc(self):
+        """Get Function object corresponding to self.func for comparison and serialization."""
+        if self.flat:
+            return self.func
+
+        return Function(self.func.func)
+
+    def flatarg(self, k: str, val: Any):
         """Flatten an argument of stage function based on argmap parameter or data wrapper.
             Arguments:
                 k (str): Argument name.
