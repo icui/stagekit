@@ -1,10 +1,10 @@
 from __future__ import annotations
 import asyncio
-from os.path import dirname, join, exists
-from sys import argv, stderr, path
+from os.path import dirname, join
+from sys import argv, stderr
 from traceback import format_exc
 from functools import partial
-import json, pickle
+import pickle
 
 
 def _call(size: int, idx: int):

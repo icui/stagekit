@@ -19,7 +19,8 @@ def load_cache() -> List[Stage]:
 
     if _cache is None:
         for src in config['modules']:
-            import_module(src)
+            if src not in config['exclude_modules']:
+                import_module(src)
 
         if ws.has('stagekit.pickle'):
             _cache = ws.load('stagekit.pickle')

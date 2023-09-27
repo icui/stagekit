@@ -9,6 +9,9 @@ class Config(TypedDict):
     # modules to import before execution
     modules: List[str]
 
+    # prevent built-in or globally-defined modeules from being imported
+    exclude_modules: List[str]
+
     # import path to the main function (<module_name>:<func_name>)
     main: NotRequired[str]
 
@@ -60,6 +63,7 @@ config: Config = {
         'stagekit.data.numpy',
         'stagekit.data.function'
     ],
+    'exclude_modules': [],
     'job': {
         'job': 'local'
     },
