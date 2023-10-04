@@ -74,5 +74,5 @@ if __name__ == '__main__':
         err = format_exc()
         print(err, file=stderr)
 
-        with open(f'{argv[1]}.error', 'a') as f:
+        with open(f'{join(argv[1], argv[2])}.error', 'a') as f:
             f.write(err)
