@@ -56,7 +56,7 @@ class Job(ABC):
 
 
     @property
-    def timeout(self) -> bool:
+    def time_limited(self) -> bool:
         """Whether task will be killed after walltime runs out."""
         return False
 

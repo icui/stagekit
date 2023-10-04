@@ -232,7 +232,7 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
             process = await asyncio.create_subprocess_shell(cmd, cwd=cwd, stdout=f_o, stderr=f_e)
 
             if timeout == 'auto':
-                if _job.timeout:
+                if _job.time_limited:
                     timeout = _job.remaining * 60
                     timeout_walltime = True
 
