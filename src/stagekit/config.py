@@ -61,7 +61,8 @@ config: Config = {
         'stagekit.io.pickle',
         'stagekit.io.numpy',
         'stagekit.data.numpy',
-        'stagekit.data.function'
+        'stagekit.data.function',
+        'stagekit.data.object'
     ],
     'exclude_modules': [],
     'job': {

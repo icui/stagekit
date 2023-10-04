@@ -175,11 +175,8 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
             fname = f'{fname}#{i}'
 
         if not callable(cmd):
-            if args:
-                cmd += ' ' + ' '.join(list(str(arg) for arg in args))
-
-            if mpiargs:
-                print('warning: mpiargs is ignored', file=stderr)
+            if args or mpiargs:
+                print('warning: args / mpiargs are ignored', file=stderr)
 
             args = None
             mpiargs = None

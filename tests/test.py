@@ -2,10 +2,26 @@ from asyncio import sleep, gather
 from stagekit import stage, ctx
 from sys import argv
 
-@stage
+
+class Msg:
+    def __init__(self, m):
+        self.msg = m
+    
+    def __eq__(self, other):
+        if isinstance(other, Msg):
+            return self.msg == other.msg
+        
+        return False
+
+    def __repr__(self):
+        return self.msg
+
+
+@stage(rerun=True)
 async def inversion():
+    print('inversion')
     await ctx.call(f'echo "start ({ctx.cwd})"')
-    await gather(preproc_async1(), preproc_async2())
+    await gather(preproc_async1(Msg('download')), preproc_async2())
     mf = 0
     for i in range(5):
         ctx.setwd(f'iter_{i:02d}')
@@ -40,9 +56,9 @@ async def specfem(_):
 
 
 @stage
-async def preproc_async1():
+async def preproc_async1(msg):
     ctx['task'] = 'download'
-    print('download')
+    print(msg)
     await sleep(1)
     print(ctx.cwd, 'download', ctx['task'])
 

@@ -1,26 +1,12 @@
 from time import sleep
 from stagekit import stage, ctx, ws, gather
 from stagekit.subprocess.stat import stat
-from sys import argv
+import numpy as np
 
 @stage
 async def test():
     # await test_mp()
     await test_mpi()
-
-
-class Msg:
-    def __init__(self, m):
-        self.msg = m
-    
-    def __eq__(self, other):
-        if isinstance(other, Msg):
-            return self.msg == other.msg
-        
-        return False
-
-    def __repr__(self):
-        return self.msg
 
 
 @stage
@@ -29,7 +15,7 @@ async def test_mp():
     print(ws.read(fname+'.stdout'))
     fname = await ctx.mpiexec(_sleep, args=('serial_2', 2), multiprocessing=True)
     print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec(_sleep, args=(Msg('serial_3'), 2), multiprocessing=True)
+    fname = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2), multiprocessing=True)
     print(ws.read(fname+'.stdout'))
     fname = await ctx.mpiexec('echo parallel_1 && sleep 2', 2, multiprocessing=True)
     print(ws.read(fname+'.stdout'))
@@ -43,7 +29,7 @@ async def test_mpi():
     print(ws.read(fname+'.stdout'))
     fname = await ctx.mpiexec(_sleep, args=('serial_2', 2))
     print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec(_sleep, args=(Msg('serial_3'), 2))
+    fname = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2))
     print(ws.read(fname+'.stdout'))
     fname = await gather(
         ctx.mpiexec('echo parallel_1_1 && sleep 2', 2),
