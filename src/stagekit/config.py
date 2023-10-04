@@ -54,8 +54,8 @@ config: Config = {
     'rerun_strategy': False,
     'data_chunk_size': None,
     'modules': [
-        'stagekit.job.local',
-        'stagekit.job.slurm',
+        'stagekit.jobs.local',
+        'stagekit.jobs.slurm',
         'stagekit.io.json',
         'stagekit.io.toml',
         'stagekit.io.pickle',

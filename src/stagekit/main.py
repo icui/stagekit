@@ -6,7 +6,7 @@ from importlib import import_module
 from typing import overload, Literal
 
 from .stage import Stage, current_stage
-from .runner import InsufficientWalltime
+from .mpiexec import InsufficientWalltime
 from .config import config
 from .wrapper import ctx
 from .task import task_factory

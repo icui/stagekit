@@ -7,7 +7,7 @@ from sys import stderr
 
 from .stage import Stage, current_stage
 from .directory import Directory, ws
-from .mpistat import stat
+from .subprocess.stat import stat
 from .config import config
 from .cache import load_cache
 
