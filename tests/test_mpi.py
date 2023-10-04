@@ -11,27 +11,27 @@ async def test():
 
 @stage
 async def test_mp():
-    fname = await ctx.mpiexec('echo serial_1 && sleep 2', multiprocessing=True)
-    print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec(_sleep, args=('serial_2', 2), multiprocessing=True)
-    print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2), multiprocessing=True)
-    print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec('echo parallel_1 && sleep 2', 2, multiprocessing=True)
-    print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec(_sleep2, 2, args=('parallel_2', 2), mpiargs=('a1', 'a2'), multiprocessing=True)
-    print(ws.read(fname+'.stdout'))
+    o = await ctx.mpiexec('echo serial_1 && sleep 2', multiprocessing=True)
+    print(o.stdout)
+    o = await ctx.mpiexec(_sleep, args=('serial_2', 2), multiprocessing=True)
+    print(o.stdout)
+    o = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2), multiprocessing=True)
+    print(o.stdout)
+    o = await ctx.mpiexec('echo parallel_1 && sleep 2', 2, multiprocessing=True)
+    print(o.stdout)
+    o = await ctx.mpiexec(_sleep2, 2, args=('parallel_2', 2), mpiargs=('a1', 'a2'), multiprocessing=True)
+    print(o.stdout)
 
 
 @stage
 async def test_mpi():
-    fname = await ctx.mpiexec('echo serial_1 && sleep 2')
-    print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec(_sleep, args=('serial_2', 2))
-    print(ws.read(fname+'.stdout'))
-    fname = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2))
-    print(ws.read(fname+'.stdout'))
-    fname = await gather(
+    o = await ctx.mpiexec('echo serial_1 && sleep 2')
+    print(o.stdout)
+    o = await ctx.mpiexec(_sleep, args=('serial_2', 2))
+    print(o.stdout)
+    o = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2))
+    print(o.stdout)
+    o = await gather(
         ctx.mpiexec('echo parallel_1_1 && sleep 2', 2),
         ctx.mpiexec('echo parallel_1_2 && sleep 2', 2),
         ctx.mpiexec('echo parallel_1_3 && sleep 2', 2),
@@ -42,10 +42,10 @@ async def test_mpi():
         ctx.mpiexec('echo parallel_1_8 && sleep 2', 2),
         ctx.mpiexec('echo parallel_1_9 && sleep 2', 2),
         ctx.mpiexec('echo parallel_1_10 && sleep 2', 2))
-    print(ws.read(fname[0]+'.stdout'))
-    print(ws.read(fname[1]+'.stdout'))
-    fname = await ctx.mpiexec(_sleep2, 2, args=('parallel_2', 2), mpiargs=('a1', 'a2'))
-    print(ws.read(fname+'.stdout'))
+    print(o[0].stdout)
+    print(o[1].stdout)
+    o = await ctx.mpiexec(_sleep2, 2, args=('parallel_2', 2), mpiargs=('a1', 'a2'))
+    print(o.stdout)
 
 
 def _sleep(msg, dur):

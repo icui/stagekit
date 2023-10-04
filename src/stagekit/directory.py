@@ -3,10 +3,13 @@ from __future__ import annotations
 from os import path, fsync
 from subprocess import check_call
 from glob import glob
-from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple
+from typing import List, Collection, Awaitable, Any, Callable, Literal, Tuple, TYPE_CHECKING
 
 from .io.io import get_io
 from .config import PATH_WORKSPACE
+
+if TYPE_CHECKING:
+    from .mpiexec import MPIOutput
 
 
 class Directory:
@@ -87,7 +90,7 @@ class Directory:
             multiprocessing: bool = False, custom_exec: str | None = None, custom_nnodes: int | Tuple[int, int] | None = None,
             args: Collection | None = None, mpiargs: Collection | None = None, fname: str | None = None,
             check_output: Callable[..., None] | None = None, timeout: Literal['auto'] | float | None = 'auto',
-            priority: int = 0):
+            priority: int = 0) -> Awaitable[MPIOutput]:
         """Execute a function or shell command with MPI or multiprocessing.
 
         Args:

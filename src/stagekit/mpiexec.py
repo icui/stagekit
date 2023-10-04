@@ -18,6 +18,48 @@ from .jobs.job import Job, _job_cls
 class InsufficientWalltime(TimeoutError):
     """Timeout due in insufficient walltime."""
 
+
+class MPIOutput:
+    """Return value of mpiexec."""
+    fname: str | None
+
+    # cache of log
+    _log: str | None = None
+
+    # cache of stdout
+    _stdout: str | None = None
+
+    # cache of stderr
+    _stderr: str | None = None
+
+    def __init__(self, fname: str | None):
+        self.fname = fname
+
+    @property
+    def log(self) -> str | None:
+        """Log content of the execution."""
+        if self._log is None and self.fname:
+            self._log = ws.read(self.fname + '.log')
+        
+        return self._log
+
+    @property
+    def stdout(self) -> str | None:
+        """stdout of the execution."""
+        if self._stdout is None and self.fname:
+            self._stdout = ws.read(self.fname + '.stdout')
+        
+        return self._stdout
+
+    @property
+    def stderr(self) -> str | None:
+        """stderr of the execution."""
+        if self._stderr is None and self.fname:
+            self._stderr = ws.read(self.fname + '.stderr')
+        
+        return self._stderr
+
+
 # pending task, asyncio.Lock -> (nnodes, priority) (Fraction for MPI tasks, int for multiprocessing tasks)
 _pending: Dict[asyncio.Lock, Tuple[Fraction | int, int]] = {}
 
@@ -77,7 +119,7 @@ async def _loop():
 async def mpiexec(cwd: str | None, cmd: str | Callable,
         nprocs: int, cpus_per_proc: int, gpus_per_proc: int | Tuple[Literal[1], int], multiprocessing: bool,
         custom_exec: str | None, custom_nnodes: int | Tuple[int, int] | None, args: Collection | None, mpiargs: Collection | None,
-        fname: str | None, check_output: Callable[..., None] | None, timeout: Literal['auto'] | float | None, priority: int) -> str | None:
+        fname: str | None, check_output: Callable[..., None] | None, timeout: Literal['auto'] | float | None, priority: int) -> MPIOutput:
     """Schedule the execution of MPI task."""
     global _job
     global _task
@@ -285,4 +327,4 @@ async def mpiexec(cwd: str | None, cmd: str | Callable,
     if err:
         raise err
 
-    return fname
+    return MPIOutput(fname)
