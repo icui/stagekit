@@ -1,7 +1,23 @@
 from time import sleep
-from stagekit import stage, ctx, ws, gather
+from stagekit import stage, ctx, gather
 from stagekit.subprocess.stat import stat
 import numpy as np
+from random import random
+
+
+class Msg:
+    def __init__(self, m):
+        self.msg = m
+    
+    def __eq__(self, other):
+        if isinstance(other, Msg):
+            return self.msg == other.msg
+        
+        return False
+
+    def __repr__(self):
+        return self.msg
+
 
 @stage
 async def test():
@@ -13,9 +29,9 @@ async def test():
 async def test_mp():
     o = await ctx.mpiexec('echo serial_1 && sleep 2', multiprocessing=True)
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, 2, args=('serial_2', 2), multiprocessing=True)
+    o = await ctx.mpiexec(_sleep, 1, args=('serial_2', 2), multiprocessing=True)
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, 2, args=(np.array('serial_3'), 2), multiprocessing=True)
+    o = await ctx.mpiexec(_sleep, 1, args=(np.array('serial_3'), 2), multiprocessing=True)
     print(o.stdout)
     o = await ctx.mpiexec('echo parallel_1 && sleep 2', 2, multiprocessing=True)
     print(o.stdout)
@@ -27,9 +43,9 @@ async def test_mp():
 async def test_mpi():
     o = await ctx.mpiexec('echo serial_1 && sleep 2')
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, 2, args=('serial_2', 2))
+    o = await ctx.mpiexec(_sleep, 1, args=('serial_2', 2))
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, 2, args=(np.array('serial_3'), 2))
+    o = await ctx.mpiexec(_sleep, 1, args=(np.array('serial_3'), 2))
     print(o.stdout)
     o = await gather(
         ctx.mpiexec('echo parallel_1_1 && sleep 2', 2),
@@ -53,6 +69,7 @@ def _sleep(msg, dur):
     sleep(dur)
 
 def _sleep2(msg, dur):
+    sleep(random())
     print(msg, stat.rank, stat.size, stat.mpiargs)
     sleep(dur)
 
