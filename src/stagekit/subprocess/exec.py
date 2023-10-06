@@ -32,16 +32,15 @@ def _call(size: int, idx: int):
 
         if hasattr(func, 'load'):
             func = func.load()
-    
 
     # call target function
     if callable(func):
         if mpiargs:
             stat.mpiargs = mpiargs[stat.rank]
-        
+
         if asyncio.iscoroutine(result := func(*args)):
             asyncio.run(result)
-    
+
     else:
         from subprocess import check_call
         check_call(func, shell=True, cwd=mpidir)

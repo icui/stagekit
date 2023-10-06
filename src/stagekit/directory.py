@@ -110,10 +110,10 @@ class Directory:
         """
         from .mpiexec import mpiexec
 
-        return mpiexec(self.cwd, cmd,
-            nprocs, cpus_per_proc, gpus_per_proc, multiprocessing,
-            custom_exec, custom_nnodes, args, mpiargs, fname,
-            check_output, timeout, priority)
+        return mpiexec(cmd, nprocs, cpus_per_proc, gpus_per_proc,
+            cwd=self.cwd, multiprocessing=multiprocessing,
+            custom_exec=custom_exec, custom_nnodes=custom_nnodes, args=args, mpiargs=mpiargs, fname=fname,
+            check_output=check_output, timeout=timeout, priority=priority)
 
     def rm(self, src: str = '.'):
         """Remove a file or a directory.

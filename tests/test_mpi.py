@@ -13,9 +13,9 @@ async def test():
 async def test_mp():
     o = await ctx.mpiexec('echo serial_1 && sleep 2', multiprocessing=True)
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, args=('serial_2', 2), multiprocessing=True)
+    o = await ctx.mpiexec(_sleep, 2, args=('serial_2', 2), multiprocessing=True)
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2), multiprocessing=True)
+    o = await ctx.mpiexec(_sleep, 2, args=(np.array('serial_3'), 2), multiprocessing=True)
     print(o.stdout)
     o = await ctx.mpiexec('echo parallel_1 && sleep 2', 2, multiprocessing=True)
     print(o.stdout)
@@ -27,9 +27,9 @@ async def test_mp():
 async def test_mpi():
     o = await ctx.mpiexec('echo serial_1 && sleep 2')
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, args=('serial_2', 2))
+    o = await ctx.mpiexec(_sleep, 2, args=('serial_2', 2))
     print(o.stdout)
-    o = await ctx.mpiexec(_sleep, args=(np.array('serial_3'), 2))
+    o = await ctx.mpiexec(_sleep, 2, args=(np.array('serial_3'), 2))
     print(o.stdout)
     o = await gather(
         ctx.mpiexec('echo parallel_1_1 && sleep 2', 2),

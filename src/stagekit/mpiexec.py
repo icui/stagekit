@@ -21,6 +21,7 @@ class InsufficientWalltime(TimeoutError):
 
 class MPIOutput:
     """Return value of mpiexec."""
+    # file name of the output files
     fname: str | None
 
     # cache of log
@@ -115,11 +116,14 @@ async def _loop():
     _task = None
 
 
+# TODO: argmap for args and mpiargs
 @stage(argmap={'check_output': None})
-async def mpiexec(cwd: str | None, cmd: str | Callable,
-        nprocs: int, cpus_per_proc: int, gpus_per_proc: int | Tuple[Literal[1], int], multiprocessing: bool,
-        custom_exec: str | None, custom_nnodes: int | Tuple[int, int] | None, args: Collection | None, mpiargs: Collection | None,
-        fname: str | None, check_output: Callable[..., None] | None, timeout: Literal['auto'] | float | None, priority: int) -> MPIOutput:
+async def mpiexec(cmd: str | Callable,
+            nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0, *, cwd: str | None = None,
+            multiprocessing: bool = False, custom_exec: str | None = None, custom_nnodes: int | Tuple[int, int] | None = None,
+            args: Collection | None = None, mpiargs: Collection | None = None, fname: str | None = None,
+            check_output: Callable[..., None] | None = None, timeout: Literal['auto'] | float | None = 'auto',
+            priority: int = 0) -> MPIOutput:
     """Schedule the execution of MPI task."""
     global _job
     global _task

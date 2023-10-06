@@ -54,7 +54,6 @@ class Job(ABC):
     # start time of execution
     _exec_start: float
 
-
     @property
     def time_limited(self) -> bool:
         """Whether task will be killed after walltime runs out."""
