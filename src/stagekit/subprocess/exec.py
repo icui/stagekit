@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 from os.path import dirname, join
-from sys import argv, stderr
+from sys import argv, stderr, stdout
 from traceback import format_exc
 from functools import partial
 import pickle
@@ -44,6 +44,10 @@ def _call(size: int, idx: int):
     else:
         from subprocess import check_call
         check_call(func, shell=True, cwd=mpidir)
+    
+    if size != 0:
+        stdout.flush()
+        stderr.flush()
 
 
 if __name__ == '__main__':
