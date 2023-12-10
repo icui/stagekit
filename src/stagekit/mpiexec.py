@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio
-from typing import Callable, Dict, Tuple, Literal, Collection, cast
+from typing import Callable, Dict, Tuple, List, Literal, Collection, cast
 from math import ceil
 from time import time
 from datetime import timedelta
@@ -73,6 +73,9 @@ _job: Job = cast(Job, None)
 # loop that checks pending and running tasks every second
 _task: asyncio.Task | None = None
 
+# workers from other jobs or processes that can execute tasks
+_workers: Dict[str, List[asyncio.Lock]] = {}
+
 
 def _dispatch(lock: asyncio.Lock, nnodes: Fraction | int) -> bool:
     """Execute a task if resource is available."""
@@ -111,12 +114,20 @@ async def _loop():
                 del _pending[lock]
                 lock.release()
         
+        # send task to external jobs if any external job is active
+        for job in ws.ls('jobs'):
+            starttime, duration, nnodes = ws.read(f'jobs/{job}').split(',')
+            if float(starttime) + float(duration) < time():
+                ws.rm(f'jobs/{job}')
+
+            else:
+                pass
+
         await asyncio.sleep(1)
-    
+
     _task = None
 
 
-# TODO: argmap for args and mpiargs
 @stage(argmap={'check_output': None})
 async def mpiexec(cmd: str | Callable,
             nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0, *, cwd: str | None = None,

@@ -63,6 +63,11 @@ class Job(ABC):
     def remaining(self) -> float:
         """Remaining walltime in minutes."""
         return self.walltime - self.gap - (time() - self._exec_start) / 60
+
+    @property
+    def jobid(self) -> str | None:
+        """Job ID as job identifier."""
+        return None
     
     def __init__(self, config: dict):
         for key, val in config.items():
@@ -75,6 +80,10 @@ class Job(ABC):
     @abstractmethod
     def mpiexec(self, cmd: str, nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0) -> str:
         """Command to call MPI or multiprocessing functions or shell commands."""
+    
+    @abstractmethod
+    def isrunning(self, jobid: str) -> bool:
+        """Check if a job is still running."""
 
     def write(self, cmd: str):
         """Write job submission script for a command.

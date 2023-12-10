@@ -21,6 +21,9 @@ class Config(TypedDict):
     # save cached data to a separate file when the buffer size is larger than a specific value (in MB)
     data_chunk_size: int | float | None
 
+    # interval of checking job status (in minutes)
+    worker_update_interval: int | float
+
     # job configuration (overwrites properties job object)
     job: dict
 
@@ -53,6 +56,7 @@ PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
 config: Config = {
     'rerun_strategy': False,
     'data_chunk_size': None,
+    'worker_update_interval': 1,
     'modules': [
         'stagekit.jobs.local',
         'stagekit.jobs.slurm',

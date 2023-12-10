@@ -10,5 +10,8 @@ class Local(Job):
     def mpiexec(self, cmd, nprocs=1, cpus_per_proc=1, gpus_per_proc=0):
         raise RuntimeError('mpiexec should not be called when no_mpi flag is onb')
 
+    def isrunning(self, jobid: str):
+        return False
+
 
 define_job('local', Local)

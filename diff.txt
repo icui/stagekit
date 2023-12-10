@@ -1,0 +1,191 @@
+diff --git a/src/stagekit/cli.py b/src/stagekit/cli.py
+index fca4c9b..ff99b0d 100755
+--- a/src/stagekit/cli.py
++++ b/src/stagekit/cli.py
+@@ -1,4 +1,5 @@
+ #!/usr/bin/env python
++from __future__ import annotations
+ from sys import argv, exit
+ 
+ 
+@@ -174,12 +175,31 @@ def cli_write():
+     """Write execution command as a job script."""
+ 
+ 
++def cli_work():
++    """Create a worker that runs tasks from main job."""
++    from .directory import ws
++    from .config import config
++    from .jobs.job import Job, _job_cls
++
++    if not ws.has():
++        ws.mkdir()
++    
++    job: Job = _job_cls[config['job']['job']](config['job'])
++
++    if job.jobid is None:
++        raise RuntimeError('only submitted jobs can run as workers, use multiprocessing instead')
++
++    # take control of the main workflow after the job of main workflow finishes.
++    cli_run()
++
++
+ commands = {
+     'run': cli_run,
+     'help': cli_help,
+     'log': cli_log,
+     'config': cli_config,
+-    'write': cli_write
++    'write': cli_write,
++    'work': cli_work
+ }
+ 
+ 
+@@ -201,3 +221,4 @@ def cli():
+                 return
+     
+     cli_help()
++ss
+\ No newline at end of file
+diff --git a/src/stagekit/config.py b/src/stagekit/config.py
+index 6cde788..8178134 100644
+--- a/src/stagekit/config.py
++++ b/src/stagekit/config.py
+@@ -21,6 +21,9 @@ class Config(TypedDict):
+     # save cached data to a separate file when the buffer size is larger than a specific value (in MB)
+     data_chunk_size: int | float | None
+ 
++    # interval of checking job status (in minutes)
++    worker_update_interval: int | float
++
+     # job configuration (overwrites properties job object)
+     job: dict
+ 
+@@ -53,6 +56,7 @@ PATH_WORKSPACE = environ.get('STAGEKIT_CONFIG_WORKSPACE') or '.stagekit'
+ config: Config = {
+     'rerun_strategy': False,
+     'data_chunk_size': None,
++    'worker_update_interval': 1,
+     'modules': [
+         'stagekit.jobs.local',
+         'stagekit.jobs.slurm',
+diff --git a/src/stagekit/jobs/job.py b/src/stagekit/jobs/job.py
+index 46850d9..7054c08 100644
+--- a/src/stagekit/jobs/job.py
++++ b/src/stagekit/jobs/job.py
+@@ -63,6 +63,11 @@ class Job(ABC):
+     def remaining(self) -> float:
+         """Remaining walltime in minutes."""
+         return self.walltime - self.gap - (time() - self._exec_start) / 60
++
++    @property
++    def jobid(self) -> str | None:
++        """Job ID as job identifier."""
++        return None
+     
+     def __init__(self, config: dict):
+         for key, val in config.items():
+@@ -75,6 +80,10 @@ class Job(ABC):
+     @abstractmethod
+     def mpiexec(self, cmd: str, nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0) -> str:
+         """Command to call MPI or multiprocessing functions or shell commands."""
++    
++    @abstractmethod
++    def isrunning(self, jobid: str) -> bool:
++        """Check if a job is still running."""
+ 
+     def write(self, cmd: str):
+         """Write job submission script for a command.
+diff --git a/src/stagekit/jobs/local.py b/src/stagekit/jobs/local.py
+index f733820..1071cc2 100644
+--- a/src/stagekit/jobs/local.py
++++ b/src/stagekit/jobs/local.py
+@@ -10,5 +10,8 @@ class Local(Job):
+     def mpiexec(self, cmd, nprocs=1, cpus_per_proc=1, gpus_per_proc=0):
+         raise RuntimeError('mpiexec should not be called when no_mpi flag is onb')
+ 
++    def isrunning(self, jobid: str):
++        return False
++
+ 
+ define_job('local', Local)
+diff --git a/src/stagekit/jobs/slurm.py b/src/stagekit/jobs/slurm.py
+index 0241be6..3503b56 100644
+--- a/src/stagekit/jobs/slurm.py
++++ b/src/stagekit/jobs/slurm.py
+@@ -1,10 +1,18 @@
+ from .job import Job, define_job
++from os import environ
+ 
+ 
+ class Slurm(Job):
+     """Run tasks locally."""
++    @property
++    def jobid(self) -> str:
++        return environ['SLURM_JOB_ID']
++
+     def mpiexec(self, cmd, nprocs=1, cpus_per_proc=1, gpus_per_proc=0):
+         return f'srun -n {nprocs} --cpus-per-task {cpus_per_proc} --gpus-per-task {gpus_per_proc} {cmd}'
+ 
++    def isrunning(self, jobid: str) -> bool:
++        return super().isrunning(jobid)
++
+ 
+ define_job('slurm', Slurm)
+diff --git a/src/stagekit/mpiexec.py b/src/stagekit/mpiexec.py
+index f4c39b4..71e4c78 100644
+--- a/src/stagekit/mpiexec.py
++++ b/src/stagekit/mpiexec.py
+@@ -1,6 +1,6 @@
+ from __future__ import annotations
+ import asyncio
+-from typing import Callable, Dict, Tuple, Literal, Collection, cast
++from typing import Callable, Dict, Tuple, List, Literal, Collection, cast
+ from math import ceil
+ from time import time
+ from datetime import timedelta
+@@ -73,6 +73,9 @@ _job: Job = cast(Job, None)
+ # loop that checks pending and running tasks every second
+ _task: asyncio.Task | None = None
+ 
++# workers from other jobs or processes that can execute tasks
++_workers: Dict[str, List[asyncio.Lock]] = {}
++
+ 
+ def _dispatch(lock: asyncio.Lock, nnodes: Fraction | int) -> bool:
+     """Execute a task if resource is available."""
+@@ -111,12 +114,20 @@ async def _loop():
+                 del _pending[lock]
+                 lock.release()
+         
++        # send task to external jobs if any external job is active
++        for job in ws.ls('jobs'):
++            starttime, duration, nnodes = ws.read(f'jobs/{job}').split(',')
++            if float(starttime) + float(duration) < time():
++                ws.rm(f'jobs/{job}')
++
++            else:
++                pass
++
+         await asyncio.sleep(1)
+-    
++
+     _task = None
+ 
+ 
+-# TODO: argmap for args and mpiargs
+ @stage(argmap={'check_output': None})
+ async def mpiexec(cmd: str | Callable,
+             nprocs: int = 1, cpus_per_proc: int = 1, gpus_per_proc: int | Tuple[Literal[1], int] = 0, *, cwd: str | None = None,
+diff --git a/src/stagekit/subprocess/loop.py b/src/stagekit/subprocess/loop.py
+deleted file mode 100644
+index fd8fcac..0000000
+--- a/src/stagekit/subprocess/loop.py
++++ /dev/null
+@@ -1,6 +0,0 @@
+-# current running subprocess
+-_loop = None
+-
+-
+-def loop():
+-    pass

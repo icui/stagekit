@@ -1,0 +1,16 @@
+[ccui@della-l07g2 ccui]$ echo $SLURM_JOB_NAME
+interactive
+[ccui@della-l07g2 ccui]$ echo $SLURM_JOB_ID
+51762803
+[ccui@della-l07g2 ccui]$ echo $SLURM_GPUS_ON_NODE
+4
+[ccui@della-l07g2 ccui]$ echo $SLURM_CPUS_ON_NODE
+20
+[ccui@della-l07g2 ccui]$ echo $SLURM_JOB_CPUS_PER_NODE
+20
+[ccui@della-l07g2 ccui]$ echo $SLURM_JOB_END_TIME
+1698953814
+[ccui@della-l07g2 ccui]$ echo $SLURM_JOB_START_TIME
+1698953214
+[ccui@della-l07g2 ccui]$ echo $SLURM_JOB_NUM_NODES
+1

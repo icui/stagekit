@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import annotations
 from sys import argv, exit
 
 
@@ -174,12 +175,31 @@ def cli_write():
     """Write execution command as a job script."""
 
 
+def cli_work():
+    """Create a worker that runs tasks from main job."""
+    from .directory import ws
+    from .config import config
+    from .jobs.job import Job, _job_cls
+
+    if not ws.has():
+        ws.mkdir()
+    
+    job: Job = _job_cls[config['job']['job']](config['job'])
+
+    if job.jobid is None:
+        raise RuntimeError('only submitted jobs can run as workers, use multiprocessing instead')
+
+    # take control of the main workflow after the job of main workflow finishes.
+    cli_run()
+
+
 commands = {
     'run': cli_run,
     'help': cli_help,
     'log': cli_log,
     'config': cli_config,
-    'write': cli_write
+    'write': cli_write,
+    'work': cli_work
 }
 
 
@@ -201,3 +221,4 @@ def cli():
                 return
     
     cli_help()
+ss
