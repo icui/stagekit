@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Dict, Mapping, Collection, TYPE_CHECKING
+from typing import Any, List, Dict, Mapping, Sequence, TYPE_CHECKING
 import asyncio
 
 from .task import create_child_task
@@ -55,7 +55,7 @@ class Stage:
     # a flat stage cannot be re-run unless the arguments are updated by self.renew()
     flat = False
 
-    def __init__(self, func: StageFunc, args: Collection, kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
+    def __init__(self, func: StageFunc, args: Sequence, kwargs: Mapping[str, Any], cwd: str | None, parent_version: int):
         self.func = func
         self.args = list(args)
         self.kwargs = dict(kwargs)
@@ -66,10 +66,10 @@ class Stage:
         self.data = {}
     
     def __getstate__(self):
-        state = self.__dict__.copy()
-
         if self.flat:
-            return state
+            return self.__dict__
+
+        state = self.__dict__.copy()
     
         state['flat'] = True
         state['func'] = self.flatfunc()
